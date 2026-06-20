@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Enterprise AI Security Governance Framework Mapper</title>
+  <style>
+    :root {
+      --bg: #07131f;
+      --panel: #0e1d2c;
+      --panel-2: #13263a;
+      --card: #102236;
+      --accent: #ff3b30;
+      --accent-2: #37d5ff;
+      --accent-3: #8df0b0;
+      --text: #eef6ff;
+      --muted: #a9bbca;
+      --line: rgba(255,255,255,0.12);
+      --shadow: 0 14px 40px rgba(0,0,0,0.35);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --ok: #8df0b0;
+      --warn: #ffd166;
+      --danger: #ff6b6b;
+      --purple: #c6a8ff;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top left, rgba(55,213,255,0.12), transparent 36%),
+                  radial-gradient(circle at top right, rgba(255,59,48,0.13), transparent 36%),
+                  var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    a { color: var(--accent-2); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+    }
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+      padding: 24px;
+      background: linear-gradient(180deg, rgba(14,29,44,0.97), rgba(7,19,31,0.97));
+      border-right: 1px solid var(--line);
+    }
+    main { padding: 28px; }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, var(--accent), #ff8a00);
+      box-shadow: 0 10px 30px rgba(255,59,48,0.35);
+      position: relative;
+    }
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.92);
+    }
+    .brand-title { font-weight: 750; letter-spacing: -0.02em; }
+    .brand-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+    h1 {
+      font-size: clamp(32px, 4vw, 58px);
+      line-height: 1.03;
+      letter-spacing: -0.055em;
+      margin: 0 0 16px;
+    }
+    h2 { margin: 0 0 14px; letter-spacing: -0.03em; font-size: 24px; }
+    h3 { margin: 0; font-size: 17px; letter-spacing: -0.02em; }
+    p { color: var(--muted); }
+    .hero {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 22px;
+      align-items: stretch;
+      margin-bottom: 22px;
+    }
+    .hero-card, .panel, .mapper-card, .source-panel {
+      background: linear-gradient(180deg, rgba(19,38,58,0.92), rgba(14,29,44,0.92));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .hero-card { padding: 30px; }
+    .hero-pitch {
+      font-size: 18px;
+      color: #dbe9f6;
+      max-width: 960px;
+    }
+    .hero-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 24px;
+    }
+    .metric {
+      padding: 14px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.055);
+      border: 1px solid rgba(255,255,255,0.075);
+    }
+    .metric strong { display: block; font-size: 22px; color: #fff; }
+    .metric span { color: var(--muted); font-size: 12px; }
+    .summary-card {
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .summary-card::before {
+      content: "";
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      right: -70px;
+      top: -70px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(55,213,255,0.22), transparent 66%);
+    }
+    .journey {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 18px;
+      position: relative;
+      z-index: 1;
+    }
+    .journey-step {
+      display: grid;
+      grid-template-columns: 36px 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+    .step-no {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(55,213,255,0.13);
+      border: 1px solid rgba(55,213,255,0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-2);
+      font-weight: 800;
+    }
+    .step-title { color: #fff; font-weight: 650; }
+    .step-copy { color: var(--muted); font-size: 13px; margin-top: 2px; }
+    .filter-group { margin: 20px 0; }
+    .filter-title {
+      text-transform: uppercase;
+      font-size: 11px;
+      color: #86a4ba;
+      letter-spacing: 0.11em;
+      margin-bottom: 10px;
+    }
+    .sidebar-stack { display: flex; flex-direction: column; gap: 14px; margin-top: 16px; }
+    .sidebar-section {
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: linear-gradient(180deg, rgba(255,255,255,0.052), rgba(255,255,255,0.022));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+    .sidebar-section.reference-layer { border-left: 4px solid var(--accent-2); }
+    .sidebar-section.domain-layer { border-left: 4px solid var(--accent-3); }
+    .sidebar-section.capability-layer { border-left: 4px solid var(--accent); }
+    .sidebar-section.utilities-layer { border-left: 4px solid var(--warn); }
+    .section-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.065);
+      color: #dbe9f6;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      border: 1px solid rgba(255,255,255,0.09);
+    }
+    aside .sidebar-section .filter-title {
+      color: #f3f8ff;
+      font-size: 12px;
+      line-height: 1.25;
+      margin-bottom: 6px;
+      letter-spacing: 0.08em;
+    }
+    .filter-desc {
+      margin: 0 0 12px;
+      color: #8faabd;
+      font-size: 12px;
+      line-height: 1.38;
+    }
+    .chip-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    button, .chip {
+      font: inherit;
+      color: var(--text);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 999px;
+      padding: 8px 11px;
+      cursor: pointer;
+      transition: 0.18s ease;
+    }
+    button:hover, .chip:hover { border-color: rgba(255,255,255,0.32); transform: translateY(-1px); }
+    .chip.active, button.primary {
+      background: linear-gradient(135deg, var(--accent), #ff8a00);
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 10px 25px rgba(255,59,48,0.22);
+    }
+    .chip.secondary.active { background: linear-gradient(135deg, #1da6ff, #37d5ff); color: #062033; }
+    .input {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 11px 12px;
+      outline: none;
+    }
+    .input:focus { border-color: rgba(55,213,255,0.8); box-shadow: 0 0 0 3px rgba(55,213,255,0.12); }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+    .utility-actions { margin-top: 0; display: grid; grid-template-columns: 1fr; }
+    .utility-actions button { width: 100%; justify-content: center; }
+
+    .top-tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 0 0 22px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      padding: 10px 0;
+      backdrop-filter: blur(14px);
+      background: linear-gradient(180deg, rgba(7,19,31,0.96), rgba(7,19,31,0.72));
+    }
+    .tab-button {
+      border-radius: 999px;
+      padding: 11px 16px;
+      font-weight: 750;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.055);
+    }
+    .tab-button.active {
+      background: linear-gradient(135deg, var(--accent), #ff8a00);
+      border-color: transparent;
+      box-shadow: 0 10px 26px rgba(255,59,48,0.22);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .ghost { background: transparent; }
+    .layout { display: block; }
+    .panel { padding: 22px; margin-bottom: 22px; }
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .small { color: var(--muted); font-size: 13px; }
+    .mapper-grid { display: grid; gap: 14px; }
+    .mapper-card {
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    .mapper-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 5px;
+      height: 100%;
+      background: var(--accent-2);
+      opacity: 0.9;
+    }
+    .mapper-top {
+      display: flex;
+      gap: 12px;
+      align-items: start;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .badge-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .badge {
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.065);
+      border: 1px solid rgba(255,255,255,0.11);
+      color: #cfe0ee;
+      font-size: 12px;
+    }
+    .badge.nist { color: #b7eaff; border-color: rgba(55,213,255,0.32); background: rgba(55,213,255,0.08); }
+    .badge.iso { color: #c1ffda; border-color: rgba(141,240,176,0.28); background: rgba(141,240,176,0.08); }
+    .badge.eu { color: #ffdcb1; border-color: rgba(255,209,102,0.28); background: rgba(255,209,102,0.08); }
+    .badge.pan { color: #ffc4c1; border-color: rgba(255,59,48,0.28); background: rgba(255,59,48,0.08); }
+    .mapper-columns {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .column-box {
+      background: rgba(7,19,31,0.48);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 12px;
+      min-height: 122px;
+    }
+    .column-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #86a4ba;
+      letter-spacing: .08em;
+      margin-bottom: 8px;
+    }
+    .column-box strong { font-size: 14px; display: block; margin-bottom: 5px; }
+    .column-box ul { margin: 7px 0 0 18px; padding: 0; color: var(--muted); font-size: 13px; }
+    .column-box li { margin: 5px 0; }
+    .product-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 8px;
+      margin: 3px 3px 3px 0;
+      border-radius: 8px;
+      color: #fff;
+      background: rgba(255,59,48,0.14);
+      border: 1px solid rgba(255,59,48,0.28);
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .relationship { width: 100%; }
+    .map-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .map-canvas {
+      min-height: 760px;
+      background:
+        linear-gradient(90deg, rgba(55,213,255,0.045) 0 31.8%, rgba(141,240,176,0.04) 31.8% 66.2%, rgba(255,59,48,0.035) 66.2% 100%),
+        radial-gradient(circle at 50% 35%, rgba(55,213,255,0.10), transparent 55%),
+        rgba(7,19,31,0.38);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      position: relative;
+      overflow: auto;
+    }
+    .graph-svg { width: 100%; min-width: 1180px; height: auto; min-height: 760px; display: block; transform-origin: top left; }
+    .map-canvas.fit-mode .graph-svg { min-width: 0; min-height: 0; }
+    #relationshipPanel:fullscreen {
+      background: radial-gradient(circle at top left, rgba(55,213,255,0.10), transparent 34%), var(--bg);
+      padding: 18px;
+      overflow: hidden;
+    }
+    #relationshipPanel:fullscreen .relationship {
+      height: calc(100vh - 36px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #relationshipPanel:fullscreen .section-head { margin-bottom: 8px; }
+    #relationshipPanel:fullscreen .map-toolbar { margin-bottom: 8px; }
+    #relationshipPanel:fullscreen .map-canvas {
+      flex: 1 1 auto;
+      min-height: 0;
+      height: auto;
+      width: 100%;
+      overflow: hidden;
+      padding: 18px;
+    }
+    #relationshipPanel:fullscreen .graph-svg { display: block; margin: 0 auto; }
+    #relationshipPanel:fullscreen .node text { font-size: 13.4px; }
+    #relationshipPanel:fullscreen .graph-label { font-size: 13px; }
+    #relationshipPanel:fullscreen .map-hint { display: none; }
+    .node { cursor: pointer; }
+    .node circle, .node rect { transition: 0.2s ease; }
+    .node:hover circle, .node:hover rect { filter: drop-shadow(0 0 10px rgba(55,213,255,.65)); }
+    .node text { pointer-events: none; font-size: 12px; fill: #eef6ff; font-weight: 650; text-anchor: middle; }
+    .edge { stroke: rgba(255,255,255,0.20); stroke-width: 1.45; transition: .2s; }
+    .edge.active { stroke: var(--accent-2); stroke-width: 3.4; filter: drop-shadow(0 0 6px rgba(55,213,255,.55)); }
+    .node.active circle, .node.active rect, .node.path circle, .node.path rect { stroke: #fff; stroke-width: 2.8; filter: drop-shadow(0 0 12px rgba(255,255,255,.45)); }
+    .node.path text { fill: #fff; }
+    .graph-label { font-size: 12px; fill: #b9cadd; text-transform: uppercase; letter-spacing: .10em; font-weight: 850; }
+    .map-hint {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .map-hint > div {
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.045);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.42);
+      opacity: 0;
+      pointer-events: none;
+      transition: 0.18s ease;
+      z-index: 80;
+    }
+    .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+    .details-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      width: min(520px, 94vw);
+      padding: 24px;
+      background: linear-gradient(180deg, rgba(14,29,44,0.99), rgba(7,19,31,0.99));
+      border-left: 1px solid var(--line);
+      box-shadow: -18px 0 60px rgba(0,0,0,0.45);
+      transform: translateX(104%);
+      transition: 0.22s ease;
+      z-index: 90;
+      overflow: auto;
+    }
+    .details-drawer.open { transform: translateX(0); }
+    .drawer-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .drawer-close { padding: 8px 10px; border-radius: 10px; }
+    .chain-card {
+      margin-top: 12px;
+      padding: 13px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.055);
+      border: 1px solid rgba(255,255,255,0.09);
+    }
+    .chain-arrow { color: var(--accent-2); font-weight: 850; margin: 0 6px; }
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 14px;
+    }
+    .matrix-table th, .matrix-table td {
+      text-align: left;
+      vertical-align: top;
+      padding: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      font-size: 13px;
+    }
+    .matrix-table th {
+      color: #cfe0ee;
+      background: rgba(255,255,255,0.06);
+      position: sticky;
+      top: 0;
+    }
+    .matrix-table tr:hover td { background: rgba(55,213,255,0.035); }
+    .maturity {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .level {
+      background: rgba(255,255,255,0.055);
+      border: 1px solid rgba(255,255,255,0.085);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .level-no { color: var(--accent-2); font-weight: 800; font-size: 13px; }
+    .level-title { margin: 6px 0; color: #fff; font-weight: 700; }
+    .level-copy { color: var(--muted); font-size: 13px; }
+    .source-list { columns: 2; column-gap: 22px; }
+    .source-list li { break-inside: avoid; margin: 0 0 8px; color: var(--muted); font-size: 13px; }
+    .source-list a { word-break: break-word; }
+    .empty-state {
+      padding: 28px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed rgba(255,255,255,0.18);
+      border-radius: 16px;
+    }
+    .toggle-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .export-area { display: none; }
+    .footnote { color: #7f96aa; font-size: 12px; margin-top: 18px; }
+    @media (max-width: 1160px) {
+      .app { grid-template-columns: 1fr; }
+      aside { position: relative; height: auto; }
+      .hero { grid-template-columns: 1fr; }
+      .mapper-columns { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 680px) {
+      main, aside { padding: 18px; }
+      .hero-metrics, .maturity, .map-hint { grid-template-columns: 1fr; }
+      .mapper-columns { grid-template-columns: 1fr; }
+      .source-list { columns: 1; }
+    }
+    @media print {
+      body { background: #fff; color: #111; }
+      aside, .actions, .top-tabs, .drawer-overlay, .details-drawer { display: none; }
+      .app { display: block; }
+      .panel, .hero-card, .mapper-card { box-shadow: none; border: 1px solid #ccc; background: #fff; color: #111; }
+      p, .small, .column-box ul, .source-list li, .level-copy { color: #333; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div>
+          <div class="brand-title">AI Governance Mapper</div>
+          <div class="brand-sub">Governance → Controls → PANW Portfolio</div>
+        </div>
+      </div>
+
+      <div class="filter-group search-block">
+        <div class="filter-title">Search</div>
+        <input id="search" class="input" placeholder="Search risk, capability, PANW area..." />
+      </div>
+
+      <div class="sidebar-stack" aria-label="Filter and utility controls">
+        <section class="sidebar-section reference-layer">
+          <div class="section-kicker">01 Reference Layer</div>
+          <div class="filter-title">Governance, Compliance & Security Architecture Reference</div>
+          <p class="filter-desc">Select the external governance, compliance, or security architecture reference that creates the requirement or control intent.</p>
+          <div id="frameworkFilters" class="chip-list"></div>
+        </section>
+
+        <section class="sidebar-section domain-layer">
+          <div class="section-kicker">02 Risk Domain</div>
+          <div class="filter-title">Enterprise AI Security Domain</div>
+          <p class="filter-desc">Select the enterprise AI risk domain that converts governance expectations into security control needs.</p>
+          <div id="domainFilters" class="chip-list"></div>
+        </section>
+
+        <section class="sidebar-section capability-layer">
+          <div class="section-kicker">03 PANW Capability</div>
+          <div class="filter-title">PANW Capability Area</div>
+          <p class="filter-desc">Select the Palo Alto Networks capability area that operationalizes the required AI security controls.</p>
+          <div id="productFilters" class="chip-list"></div>
+        </section>
+
+        <section class="sidebar-section utilities-layer">
+          <div class="section-kicker">Utilities</div>
+          <div class="filter-title">Output & Session Controls</div>
+          <p class="filter-desc">Reset the current analysis view, export the filtered mapping data, or print the current tool view as a PDF.</p>
+          <div class="actions utility-actions">
+            <button class="primary" onclick="resetFilters()">Reset Filters</button>
+            <button class="ghost" onclick="downloadCSV()">Export CSV</button>
+            <button class="ghost" onclick="window.print()">Print / PDF</button>
+          </div>
+        </section>
+      </div>
+
+      <p class="footnote">This prototype is designed for executive workshops, AI security assessments, and product-value mapping discussions. Version 22 aligns the top metrics and Relationship Map terminology with the three-layer model: Reference Layer → Enterprise AI Security Domain → PANW Capability Area. Zero Trust is treated as a NIST SP 800-207-aligned security architecture reference; Prisma SASE is treated as the underlying Zero Trust/SASE delivery architecture rather than a standalone PANW capability node; and the Relationship Map is generated from the same mapping data source as the Mapping Explorer. Validate product availability and packaging before using it as customer-facing material.</p>
+    </aside>
+
+    <main>
+      <section class="hero">
+        <div class="hero-card">
+          <h1>Enterprise AI Security Governance Framework</h1>
+          <p class="hero-pitch">A practical mapping tool that translates AI governance and compliance expectations into enterprise security capabilities and Palo Alto Networks solution areas across users, applications, agents, browsers, endpoints, data, and runtime.</p>
+          <div class="hero-metrics">
+            <div class="metric"><strong id="metricReferences">0</strong><span>governance/security references</span></div>
+            <div class="metric"><strong id="metricDomains">0</strong><span>Enterprise AI Security Domains</span></div>
+            <div class="metric"><strong id="metricCapabilities">0</strong><span>PANW Capability Areas</span></div>
+          </div>
+        </div>
+        <div class="hero-card summary-card">
+          <h2>Core Message</h2>
+          <p>AI governance should not stop at policies, inventories, and compliance checklists. It must be operationalized through enforceable security controls.</p>
+          <div class="journey">
+            <div class="journey-step"><div class="step-no">1</div><div><div class="step-title">Governance intent</div><div class="step-copy">NIST AI RMF, ISO/IEC 42001, NIST GenAI Profile, EU AI Act, NIST SP 800-207 Zero Trust Architecture</div></div></div>
+            <div class="journey-step"><div class="step-no">2</div><div><div class="step-title">Enterprise AI Security Domains</div><div class="step-copy">GenAI access, data, application runtime, model and agent artifact supply chain, agent, endpoint, browser, monitoring</div></div></div>
+            <div class="journey-step"><div class="step-no">3</div><div><div class="step-title">Security control plane</div><div class="step-copy">Palo Alto Networks portfolio aligned to real-world enforcement points</div></div></div>
+          </div>
+        </div>
+      </section>
+
+      <nav class="top-tabs" aria-label="Main views">
+        <button id="tabMapping" class="tab-button active" onclick="setActiveTab('mapping')">Mapping Explorer</button>
+        <button id="tabMap" class="tab-button" onclick="setActiveTab('map')">Relationship Map</button>
+        <button id="tabJourney" class="tab-button" onclick="setActiveTab('journey')">Deployment Journey</button>
+      </nav>
+
+      <section id="mappingPanel" class="tab-panel active">
+        <div class="panel">
+          <div class="section-head">
+            <div>
+              <h2>Interactive Framework Mapping</h2>
+              <div class="small" id="resultCount">Showing all mappings</div>
+            </div>
+            <div class="toggle-row">
+              <button id="viewCards" class="chip active" onclick="setView('cards')">Cards</button>
+              <button id="viewTable" class="chip" onclick="setView('table')">Table</button>
+            </div>
+          </div>
+          <div id="cardsView" class="mapper-grid"></div>
+          <div id="tableView" style="display:none; overflow:auto;"></div>
+        </div>
+      </section>
+
+      <section id="relationshipPanel" class="tab-panel">
+        <div class="panel relationship">
+          <div class="section-head">
+            <div>
+              <h2>Reference-to-Control-to-Capability Map</h2>
+              <div class="small">Full-width swimlane view: governance framework, regulation, or security architecture reference → Enterprise AI Security Domain → PANW Capability Area.</div>
+            </div>
+          </div>
+          <div class="map-toolbar">
+            <div class="small">Click any node to highlight the related governance-to-control-to-capability path and open details.</div>
+            <div class="toggle-row">
+              <button class="chip" onclick="resetGraphSelection()">Clear Highlight</button>
+              <button class="chip" onclick="fitMap()">Fit Map</button>
+              <button class="chip" onclick="toggleMapFullscreen()">Presentation Mode</button>
+            </div>
+          </div>
+          <div id="mapCanvas" class="map-canvas">
+            <svg id="graph" class="graph-svg" viewBox="0 0 1260 760" role="img" aria-label="Relationship map between AI governance frameworks, compliance references, security architecture references, Enterprise AI Security Domains and PANW Capability Areas"></svg>
+          </div>
+          <div class="map-hint">
+            <div><strong>1. Governance / Compliance / Architecture Reference</strong><br>Governance, compliance, and security architecture expectations from NIST AI RMF, ISO/IEC 42001, NIST AI 600-1, EU AI Act, and NIST SP 800-207 Zero Trust Architecture.</div>
+            <div><strong>2. Enterprise AI Security Domain</strong><br>Enterprise AI security domains that translate governance and compliance expectations into concrete areas of control such as access, data protection, runtime defense, supply chain, endpoint, browser, monitoring, and Zero Trust for AI.</div>
+            <div><strong>3. PANW Capability Area</strong><br>PANW capability areas that operationalize AI governance across AI access, browser, endpoint, agent, runtime, data, posture, and SOC layers. Prisma SASE is treated as the underlying Zero Trust delivery architecture, not as a standalone capability node.</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="journeyPanel" class="tab-panel">
+        <div class="panel">
+          <h2>Suggested Adoption Journey</h2>
+          <div class="maturity">
+            <div class="level"><div class="level-no">Stage 1</div><div class="level-title">Visibility</div><div class="level-copy">Discover AI apps, shadow AI, agents, tools, browser workflows, endpoint AI artifacts, and data flows.</div></div>
+            <div class="level"><div class="level-no">Stage 2</div><div class="level-title">Assessment</div><div class="level-copy">Classify AI use cases, assess risk, test models and agents, verify identity, and evaluate data exposure.</div></div>
+            <div class="level"><div class="level-no">Stage 3</div><div class="level-title">Enforcement</div><div class="level-copy">Apply Zero Trust access, data protection, runtime controls, browser guardrails, and endpoint policy.</div></div>
+            <div class="level"><div class="level-no">Stage 4</div><div class="level-title">Response</div><div class="level-copy">Monitor drift, detect misuse, correlate events, automate response, preserve audit evidence, and continuously improve.</div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel source-panel">
+        <h2>Reference Sources Embedded in the Prototype</h2>
+        <ul class="source-list">
+          <li>NIST AI Risk Management Framework: <a href="https://www.nist.gov/itl/ai-risk-management-framework" target="_blank" rel="noopener">nist.gov/itl/ai-risk-management-framework</a></li>
+          <li>NIST AI 600-1 Generative AI Profile: <a href="https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf" target="_blank" rel="noopener">nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf</a></li>
+          <li>ISO/IEC 42001:2023: <a href="https://www.iso.org/standard/42001" target="_blank" rel="noopener">iso.org/standard/42001</a></li>
+          <li>EU AI Act overview: <a href="https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai" target="_blank" rel="noopener">digital-strategy.ec.europa.eu</a></li>
+          <li>NIST SP 800-207 Zero Trust Architecture: <a href="https://csrc.nist.gov/pubs/sp/800/207/final" target="_blank" rel="noopener">csrc.nist.gov/pubs/sp/800/207/final</a></li>
+          <li>AI Runtime Security / Prisma AIRS documentation: <a href="https://docs.paloaltonetworks.com/ai-runtime-security" target="_blank" rel="noopener">docs.paloaltonetworks.com/ai-runtime-security</a></li>
+          <li>AI Model Security and Agent Artifact Scanning: <a href="https://www.paloaltonetworks.com/blog/2026/03/prisma-airs-3-0-autonomous-ai/" target="_blank" rel="noopener">paloaltonetworks.com/blog/2026/03/prisma-airs-3-0-autonomous-ai</a></li>
+          <li>AI Access Security for GenAI visibility, access control, and DLP: <a href="https://www.paloaltonetworks.com/sase/ai-access-security" target="_blank" rel="noopener">paloaltonetworks.com/sase/ai-access-security</a></li>
+          <li>Prisma Browser for agentic AI: <a href="https://www.paloaltonetworks.com/sase/prisma-browser-secure-agentic-browsing" target="_blank" rel="noopener">paloaltonetworks.com/sase/prisma-browser-secure-agentic-browsing</a></li>
+          <li>Agentic Endpoint Security / Koi acquisition: <a href="https://www.paloaltonetworks.com/company/press/2026/palo-alto-networks-completes-acquisition-of-koi-to-secure-the-agentic-endpoint" target="_blank" rel="noopener">paloaltonetworks.com/company/press/2026/...</a></li>
+          <li>Cortex XDR: <a href="https://www.paloaltonetworks.com/cortex/cortex-xdr" target="_blank" rel="noopener">paloaltonetworks.com/cortex/cortex-xdr</a></li>
+        </ul>
+      </section>
+    </main>
+  </div>
+
+
+  <div id="drawerOverlay" class="drawer-overlay" onclick="closeDrawer()"></div>
+  <div id="detailsDrawer" class="details-drawer" aria-hidden="true">
+    <div class="drawer-head">
+      <div>
+        <div class="filter-title">Selected Path</div>
+        <h2 id="drawerTitle" style="margin:0;">Relationship Details</h2>
+      </div>
+      <button class="drawer-close ghost" onclick="closeDrawer()">Close</button>
+    </div>
+    <div id="drawerContent">
+      <p class="small">Select a node in the relationship map to view the mapped reference, Enterprise AI Security Domain, and PANW Capability Areas.</p>
+    </div>
+  </div>
+
+  <textarea id="csvData" class="export-area"></textarea>
+
+<script>
+const mappings = [
+  {
+    "id": "govern-operating-model",
+    "domain": "Governance Operating Model",
+    "frameworks": [
+      "NIST AI RMF",
+      "ISO/IEC 42001",
+      "EU AI Act"
+    ],
+    "category": "Governance, accountability, policy, and auditability",
+    "challenge": "AI adoption is expanding across business units without consistent ownership, acceptable-use policy, approval workflow, risk classification, or audit evidence.",
+    "capability": [
+      "AI governance operating model",
+      "AI acceptable-use policy",
+      "AI inventory and ownership",
+      "Risk classification and approval workflow",
+      "Audit evidence and exception management",
+      "Governance-to-SOC escalation and response workflow"
+    ],
+    "products": [
+      "AI Security Posture Management",
+      "AI Access Security",
+      "Cortex XSIAM"
+    ],
+    "value": "Establishes accountable AI governance with inventory, policy, approval, exception, audit evidence, and SOC response workflows that security teams can operationalize."
+  },
+  {
+    "id": "genai-access-shadow-ai",
+    "domain": "GenAI Access & Shadow AI Control",
+    "frameworks": [
+      "NIST SP 800-207 Zero Trust Architecture",
+      "NIST AI RMF",
+      "NIST AI 600-1",
+      "ISO/IEC 42001",
+      "EU AI Act"
+    ],
+    "category": "GenAI application access governance, Shadow AI discovery, data protection, and compliance visibility",
+    "challenge": "Employees access sanctioned and unsanctioned GenAI apps through the web, creating Shadow AI, uncontrolled data sharing, inconsistent access policy, limited governance evidence, and compliance exposure for regulated AI use.",
+    "capability": [
+      "Discover sanctioned and shadow GenAI apps",
+      "Generate AI app risk scores and usage analytics",
+      "Apply granular allow, block, coach, and monitor controls",
+      "Inspect prompts and responses for sensitive data",
+      "Enforce policy through AI Access Security and browser access paths"
+    ],
+    "products": [
+      "AI Access Security",
+      "Enterprise DLP",
+      "Prisma Browser"
+    ],
+    "value": "Connects Zero Trust to AI governance by making GenAI access visible, risk-aware, data-aware, and enforceable at the point of use through AI Access Security, DLP, and browser controls."
+  },
+  {
+    "id": "data-governance",
+    "domain": "AI Data Protection",
+    "frameworks": [
+      "NIST AI RMF",
+      "NIST AI 600-1",
+      "ISO/IEC 42001",
+      "EU AI Act",
+      "NIST SP 800-207 Zero Trust Architecture"
+    ],
+    "category": "Data governance, privacy, and AI data-flow control",
+    "challenge": "Sensitive data, regulated information, source code, credentials, and intellectual property can be submitted to external AI services or exposed through AI outputs.",
+    "capability": [
+      "Enterprise DLP for AI prompts and responses",
+      "Data classification and content inspection",
+      "Context-aware AI data policy",
+      "RAG and knowledge-base access control",
+      "AI data exposure posture visibility and remediation tracking",
+      "Data exposure monitoring and response"
+    ],
+    "products": [
+      "AI Access Security",
+      "Enterprise DLP",
+      "AI Runtime Security / AI Runtime Firewall",
+      "Prisma Browser",
+      "AI Security Posture Management"
+    ],
+    "value": "Protects sensitive data across employee GenAI use, browser sessions, AI application runtime, and AI posture exposure paths."
+  },
+  {
+    "id": "ai-app-runtime",
+    "domain": "AI Application & Runtime Risk",
+    "frameworks": [
+      "NIST AI RMF",
+      "NIST AI 600-1",
+      "ISO/IEC 42001"
+    ],
+    "category": "AI application security and runtime governance",
+    "challenge": "Enterprise AI applications, copilots, chatbots, RAG systems, and agentic application workflows face prompt injection, malicious input, unsafe output, data exfiltration, tool-call abuse, and policy bypass risks.",
+    "capability": [
+      "AI runtime firewall",
+      "Prompt and response inspection",
+      "Jailbreak and prompt-injection defense",
+      "RAG data-access protection",
+      "Agent and tool-call guardrails",
+      "Runtime logging and governance"
+    ],
+    "products": [
+      "AI Runtime Security / AI Runtime Firewall",
+      "AI Gateway",
+      "Cortex XSIAM"
+    ],
+    "value": "Moves AI governance from design-time review into live runtime protection for AI applications and agentic execution paths."
+  },
+  {
+    "id": "model-agent-artifact-risk",
+    "domain": "AI Model & Agent Artifact Supply Chain Risk",
+    "frameworks": [
+      "NIST AI RMF",
+      "NIST AI 600-1",
+      "ISO/IEC 42001",
+      "EU AI Act"
+    ],
+    "category": "Model assurance plus agent artifact supply-chain security",
+    "challenge": "Organizations adopt third-party models, proprietary models, agent code, MCP servers, plugins, and skills without sufficient validation of embedded threats, provenance, permissions, vulnerabilities, and indirect-injection paths.",
+    "capability": [
+      "Model scanning and assessment",
+      "Agent artifact scanning",
+      "Model and agent supply-chain validation",
+      "Unsafe permission and vulnerability detection",
+      "AI model and agent artifact posture visibility",
+      "Predeployment assurance for models, agents, tools, and MCP servers"
+    ],
+    "products": [
+      "AI Model Security + Agent Artifact Scan",
+      "AI Security Posture Management",
+      "AI Red Teaming",
+      "Agentic Endpoint Security"
+    ],
+    "value": "Extends model security into the agentic supply chain, combining artifact scanning with Cortex Cloud AI-SPM posture visibility before models, agents, tools, or MCP servers enter production or endpoints."
+  },
+  {
+    "id": "ai-red-teaming",
+    "domain": "AI Assurance & Red Teaming",
+    "frameworks": [
+      "NIST AI RMF",
+      "NIST AI 600-1",
+      "ISO/IEC 42001",
+      "EU AI Act"
+    ],
+    "category": "AI system testing, validation, and assurance",
+    "challenge": "AI systems can pass standard functional testing while remaining vulnerable to adversarial prompts, unsafe behavior, data leakage, and agentic abuse scenarios.",
+    "capability": [
+      "Automated AI red teaming",
+      "Agentic attack simulation",
+      "Safety, security, and compliance testing",
+      "Risk findings mapped to remediation",
+      "Predeployment and continuous assurance"
+    ],
+    "products": [
+      "AI Red Teaming"
+    ],
+    "value": "Provides defensible evidence that AI applications, models, and agents have been tested against realistic AI-specific threats. Findings can feed downstream posture management and remediation workflows, but red teaming execution remains a distinct capability."
+  },
+  {
+    "id": "agentic-endpoint",
+    "domain": "Agentic Endpoint Risk",
+    "frameworks": [
+      "NIST AI RMF",
+      "NIST AI 600-1",
+      "NIST SP 800-207 Zero Trust Architecture"
+    ],
+    "category": "Endpoint-native AI agents, coding agents, and non-binary AI components",
+    "challenge": "Developer systems and user endpoints increasingly run coding agents, local agents, plugins, skills, MCP servers, and other AI-native components outside traditional endpoint visibility.",
+    "capability": [
+      "Endpoint AI artifact discovery",
+      "Agentic tool inventory",
+      "Coding agent visibility",
+      "Non-binary component governance",
+      "Endpoint detection and response integration"
+    ],
+    "products": [
+      "Agentic Endpoint Security",
+      "Cortex XDR",
+      "Cortex XSIAM",
+      "AI Model Security + Agent Artifact Scan"
+    ],
+    "value": "Closes the endpoint blind spot created by AI-native tools and autonomous endpoint workflows."
+  },
+  {
+    "id": "agentic-browser",
+    "domain": "Agentic Browser Risk",
+    "frameworks": [
+      "NIST AI RMF",
+      "NIST AI 600-1",
+      "NIST SP 800-207 Zero Trust Architecture",
+      "ISO/IEC 42001"
+    ],
+    "category": "Secure browser and autonomous web workflow governance",
+    "challenge": "Browser-based agents act with user identity across SaaS and web applications, creating risks around data movement, unauthorized actions, session misuse, and scope drift.",
+    "capability": [
+      "Secure AI workspace",
+      "Browser-native visibility",
+      "Autonomous workflow control",
+      "DLP in browser sessions",
+      "Governance for bring-your-own-model workflows"
+    ],
+    "products": [
+      "Prisma Browser",
+      "AI Access Security",
+      "Enterprise DLP"
+    ],
+    "value": "Secures the place where users, SaaS, data, and AI agents increasingly intersect."
+  },
+  {
+    "id": "third-party-supply-chain",
+    "domain": "Third-Party AI Supply Chain Risk",
+    "frameworks": [
+      "ISO/IEC 42001",
+      "NIST AI RMF",
+      "NIST AI 600-1",
+      "EU AI Act"
+    ],
+    "category": "Third-party AI, open-source AI, model and agent supply-chain governance",
+    "challenge": "Enterprises consume external models, APIs, open-source AI components, MCP servers, plugins, and agent artifacts without consistent supply-chain controls.",
+    "capability": [
+      "Third-party AI risk assessment",
+      "Model and agent artifact scanning",
+      "Supply-chain validation",
+      "Vendor governance workflow",
+      "Continuous risk posture monitoring"
+    ],
+    "products": [
+      "AI Model Security + Agent Artifact Scan",
+      "AI Security Posture Management",
+      "AI Red Teaming",
+      "Agentic Endpoint Security"
+    ],
+    "value": "Extends AI governance beyond internal policy to the AI-native supply chain."
+  },
+  {
+    "id": "monitoring-response",
+    "domain": "AI Monitoring & Response",
+    "frameworks": [
+      "NIST AI RMF",
+      "ISO/IEC 42001",
+      "EU AI Act",
+      "NIST SP 800-207 Zero Trust Architecture"
+    ],
+    "category": "Continuous monitoring, incident response, and governance feedback loop",
+    "challenge": "AI controls lose effectiveness if telemetry, alerts, exceptions, agent behavior, and incidents are not correlated and fed back into governance decisions.",
+    "capability": [
+      "AI security telemetry collection",
+      "AI posture drift and exposure monitoring",
+      "Incident detection and prioritization",
+      "Workflow automation",
+      "Policy feedback loop",
+      "Evidence for audit and board reporting"
+    ],
+    "products": [
+      "AI Security Posture Management",
+      "Cortex XSIAM",
+      "Cortex XDR",
+      "AI Runtime Security / AI Runtime Firewall",
+      "AI Access Security"
+    ],
+    "value": "Creates a closed loop between AI governance, Cortex Cloud AI-SPM posture monitoring, AI security operations, and continuous improvement."
+  },
+  {
+    "id": "high-risk-ai-compliance",
+    "domain": "Regulated / High-Risk AI",
+    "frameworks": [
+      "EU AI Act",
+      "ISO/IEC 42001",
+      "NIST AI RMF"
+    ],
+    "category": "Risk classification, transparency, technical controls, and compliance evidence",
+    "challenge": "High-impact AI use cases in employment, finance, healthcare, public sector, education, critical operations, or other regulated environments require stronger risk classification, documentation, monitoring, and control.",
+    "capability": [
+      "Use-case classification",
+      "Control evidence mapping",
+      "Testing and assurance for regulated AI systems",
+      "Monitoring and logging",
+      "Risk treatment workflow",
+      "Security-by-design and continuous assurance"
+    ],
+    "products": [
+      "AI Security Posture Management",
+      "AI Red Teaming",
+      "AI Runtime Security / AI Runtime Firewall",
+      "Cortex XSIAM"
+    ],
+    "value": "Supports regulated AI and high-risk AI programs with inventory, evidence, testing, runtime control, logging, and response workflows."
+  },
+  {
+    "id": "zero-trust-for-ai",
+    "domain": "Zero Trust for AI",
+    "frameworks": [
+      "NIST SP 800-207 Zero Trust Architecture",
+      "NIST AI RMF",
+      "NIST AI 600-1",
+      "ISO/IEC 42001"
+    ],
+    "category": "Identity, context, least privilege, segmentation, and continuous enforcement for AI",
+    "challenge": "AI systems and agents expand access paths across users, devices, data, SaaS, APIs, models, and tools. Static trust assumptions are no longer sufficient.",
+    "capability": [
+      "Identity-aware AI access",
+      "Device and session context",
+      "Least-privilege tool and data access",
+      "Inline enforcement for GenAI, AI application, and agent traffic",
+      "Continuous verification and response"
+    ],
+    "products": [
+      "AI Access Security",
+      "Enterprise DLP",
+      "Prisma Browser",
+      "AI Gateway",
+      "AI Runtime Security / AI Runtime Firewall",
+      "Cortex XSIAM"
+    ],
+    "value": "Applies Zero Trust principles to AI users, apps, data, tools, agents, and runtime traffic through context-aware enforcement and response."
+  }
+];
+
+const frameworkList = ['NIST AI RMF', 'ISO/IEC 42001', 'NIST AI 600-1', 'EU AI Act', 'NIST SP 800-207 Zero Trust Architecture'];
+const domainList = [...new Set(mappings.map(m => m.domain))];
+const productList = [...new Set(mappings.flatMap(m => m.products))];
+let activeFrameworks = new Set();
+let activeDomains = new Set();
+let activeProducts = new Set();
+let currentView = 'cards';
+
+const productColors = {
+  'AI Security Posture Management': '#ff6b6b',
+  'AI Runtime Security / AI Runtime Firewall': '#ff6b6b',
+  'AI Model Security + Agent Artifact Scan': '#ffd166',
+  'AI Red Teaming': '#ffd166',
+  'AI Gateway': '#ff8a00',
+  'AI Access Security': '#37d5ff',
+  'Enterprise DLP': '#8df0b0',
+  'Prisma Browser': '#c6a8ff',
+  'Agentic Endpoint Security': '#c6a8ff',
+  'Cortex XDR': '#a7c7ff',
+  'Cortex XSIAM': '#a7c7ff'
+};
+
+function clsForFramework(framework) {
+  if (framework.includes('NIST')) return 'nist';
+  if (framework.includes('ISO')) return 'iso';
+  if (framework.includes('EU')) return 'eu';
+  return 'pan';
+}
+
+function renderFilters() {
+  const fw = document.getElementById('frameworkFilters');
+  fw.innerHTML = frameworkList.map(item => `<button class="chip secondary" data-type="framework" data-value="${item}">${item}</button>`).join('');
+  const dm = document.getElementById('domainFilters');
+  dm.innerHTML = domainList.map(item => `<button class="chip" data-type="domain" data-value="${item}">${item}</button>`).join('');
+  const pr = document.getElementById('productFilters');
+  pr.innerHTML = productList.map(item => `<button class="chip" data-type="product" data-value="${item}">${item}</button>`).join('');
+  document.querySelectorAll('.chip[data-type]').forEach(btn => {
+    btn.addEventListener('click', () => toggleFilter(btn.dataset.type, btn.dataset.value, btn));
+  });
+}
+
+function toggleFilter(type, value, btn) {
+  const target = type === 'framework' ? activeFrameworks : type === 'domain' ? activeDomains : activeProducts;
+  if (target.has(value)) target.delete(value); else target.add(value);
+  btn.classList.toggle('active');
+  render();
+}
+
+function resetFilters() {
+  activeFrameworks.clear();
+  activeDomains.clear();
+  activeProducts.clear();
+
+  const searchInput = document.getElementById('search');
+  if (searchInput) searchInput.value = '';
+
+  document.querySelectorAll('.chip[data-type]').forEach(btn => btn.classList.remove('active'));
+
+  // The old right-side nodeDetails panel was removed when the Relationship Map
+  // was converted to a full-width map with a slide-out drawer. Resetting filters
+  // should now also clear any map highlight and close the drawer.
+  resetGraphSelection();
+  render();
+}
+
+function filterMappings() {
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  return mappings.filter(m => {
+    const text = [m.domain, m.category, m.challenge, m.value, ...m.frameworks, ...m.capability, ...m.products].join(' ').toLowerCase();
+    const matchSearch = !q || text.includes(q);
+    const matchFramework = !activeFrameworks.size || m.frameworks.some(f => activeFrameworks.has(f));
+    const matchDomain = !activeDomains.size || activeDomains.has(m.domain);
+    const matchProduct = !activeProducts.size || m.products.some(p => activeProducts.has(p));
+    return matchSearch && matchFramework && matchDomain && matchProduct;
+  });
+}
+
+function renderCards(data) {
+  const root = document.getElementById('cardsView');
+  if (!data.length) {
+    root.innerHTML = `<div class="empty-state">No matching mappings. Try clearing one or more filters.</div>`;
+    return;
+  }
+  root.innerHTML = data.map(m => `
+    <article class="mapper-card">
+      <div class="mapper-top">
+        <div>
+          <h3>${m.domain}</h3>
+          <div class="badge-row">
+            ${m.frameworks.map(f => `<span class="badge ${clsForFramework(f)}">${f}</span>`).join('')}
+          </div>
+        </div>
+        <span class="badge pan">${m.products.length} solution areas</span>
+      </div>
+      <div class="mapper-columns">
+        <div class="column-box"><div class="column-label">Reference Classification</div><strong>${m.category}</strong><ul>${m.frameworks.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+        <div class="column-box"><div class="column-label">Enterprise Challenge</div><strong>${m.challenge}</strong></div>
+        <div class="column-box"><div class="column-label">Required Capability</div><ul>${m.capability.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+        <div class="column-box"><div class="column-label">PANW Capability Mapping</div>${m.products.map(p => `<span class="product-pill" style="border-color:${productColors[p]||'#ff6b6b'}55;background:${productColors[p]||'#ff6b6b'}22">${p}</span>`).join('')}<p class="small">${m.value}</p></div>
+      </div>
+    </article>`).join('');
+}
+
+function renderTable(data) {
+  const root = document.getElementById('tableView');
+  if (!data.length) { root.innerHTML = `<div class="empty-state">No matching mappings.</div>`; return; }
+  root.innerHTML = `
+    <table class="matrix-table">
+      <thead><tr><th>Domain</th><th>Reference Classification</th><th>Enterprise Challenge</th><th>Required Capabilities</th><th>PANW Capability Mapping</th></tr></thead>
+      <tbody>${data.map(m => `
+        <tr>
+          <td><strong>${m.domain}</strong><div class="badge-row">${m.frameworks.map(f => `<span class="badge ${clsForFramework(f)}">${f}</span>`).join('')}</div></td>
+          <td>${m.category}</td>
+          <td>${m.challenge}</td>
+          <td><ul>${m.capability.map(x=>`<li>${x}</li>`).join('')}</ul></td>
+          <td>${m.products.map(p => `<span class="product-pill" style="border-color:${productColors[p]||'#ff6b6b'}55;background:${productColors[p]||'#ff6b6b'}22">${p}</span>`).join('')}<div class="small">${m.value}</div></td>
+        </tr>`).join('')}</tbody>
+    </table>`;
+}
+
+function setView(view) {
+  currentView = view;
+  document.getElementById('viewCards').classList.toggle('active', view === 'cards');
+  document.getElementById('viewTable').classList.toggle('active', view === 'table');
+  document.getElementById('cardsView').style.display = view === 'cards' ? 'grid' : 'none';
+  document.getElementById('tableView').style.display = view === 'table' ? 'block' : 'none';
+}
+
+function setActiveTab(tab) {
+  const map = {
+    mapping: ['tabMapping', 'mappingPanel'],
+    map: ['tabMap', 'relationshipPanel'],
+    journey: ['tabJourney', 'journeyPanel']
+  };
+  Object.entries(map).forEach(([key, [btn, panel]]) => {
+    document.getElementById(btn).classList.toggle('active', key === tab);
+    document.getElementById(panel).classList.toggle('active', key === tab);
+  });
+  if (tab === 'map') setTimeout(fitMap, 40);
+}
+
+function renderGraph() {
+  const svg = document.getElementById('graph');
+  const canvas = document.getElementById('mapCanvas');
+  const isPresentation = !!(document.fullscreenElement && document.fullscreenElement.id === 'relationshipPanel');
+
+  // Use the same source arrays as Mapping Explorer. This prevents drift between the table/cards view and the Relationship Map.
+  const frameworkNodes = frameworkList;
+  const capabilityNodes = domainList;
+  const capabilityAreaNodes = productList;
+
+  // Normal mode stays compact. Presentation Mode uses a wider logical canvas so the
+  // three swimlanes occupy the full screen instead of leaving unused space on the right.
+  const containerWidth = canvas ? canvas.clientWidth : 1260;
+  const graphWidth = isPresentation ? Math.max(1720, Math.min(2400, Math.floor(containerWidth * 1.18))) : 1260;
+  const leftX = isPresentation ? 56 : 40;
+  const leftW = isPresentation ? 320 : 210;
+  const middleW = isPresentation ? 380 : 250;
+  const rightW = isPresentation ? 330 : 220;
+  const middleX = isPresentation ? Math.floor(graphWidth * 0.39) : 500;
+  const rightX = isPresentation ? graphWidth - rightW - 60 : 990;
+  const topPad = isPresentation ? 76 : 66;
+  const bottomPad = isPresentation ? 88 : 82;
+
+  const hFor = (label, type) => {
+    if (type === 'framework') return 52;
+    if (label.length > 42) return 66;
+    if (label.length > 30) return 58;
+    if (label.length > 23) return 52;
+    return 44;
+  };
+  const graphHeight = Math.max(
+    860,
+    topPad + bottomPad + capabilityNodes.length * 72,
+    topPad + bottomPad + capabilityAreaNodes.length * 64,
+    topPad + bottomPad + frameworkNodes.length * 112
+  );
+
+  const colorForFramework = id => {
+    if (id.includes('NIST')) return '#37d5ff';
+    if (id.includes('ISO')) return '#8df0b0';
+    if (id.includes('EU')) return '#ffd166';
+    return '#ff8a00';
+  };
+  const colorForCapability = id => {
+    const colorMap = {
+      'Governance Operating Model': '#a7c7ff',
+      'GenAI Access & Shadow AI Control': '#37d5ff',
+      'AI Data Protection': '#8df0b0',
+      'AI Application & Runtime Risk': '#ff6b6b',
+      'AI Model & Agent Artifact Supply Chain Risk': '#ffd166',
+      'AI Assurance & Red Teaming': '#ffd166',
+      'Agentic Browser Risk': '#c6a8ff',
+      'Agentic Endpoint Risk': '#c6a8ff',
+      'Third-Party AI Supply Chain Risk': '#ffd166',
+      'AI Monitoring & Response': '#a7c7ff',
+      'Regulated / High-Risk AI': '#ffd166',
+      'Zero Trust for AI': '#ff8a00'
+    };
+    return colorMap[id] || '#a7c7ff';
+  };
+  const colorForProduct = id => productColors[id] || '#ff6b6b';
+
+  const makeColumn = (items, type, x, w, colorFn) => {
+    const usableHeight = graphHeight - topPad - bottomPad;
+    const gap = items.length <= 1 ? 0 : usableHeight / (items.length - 1);
+    return items.map((id, i) => {
+      const h = hFor(id, type);
+      const centerY = topPad + i * gap;
+      return { id, type, x, y: centerY - h / 2, w, h, color: colorFn(id) };
+    });
+  };
+
+  const nodes = [
+    ...makeColumn(frameworkNodes, 'framework', leftX, leftW, colorForFramework),
+    ...makeColumn(capabilityNodes, 'domain', middleX, middleW, colorForCapability),
+    ...makeColumn(capabilityAreaNodes, 'product', rightX, rightW, colorForProduct)
+  ];
+
+  window.graphNodes = nodes;
+  window.nodeMap = Object.fromEntries(nodes.map(n => [n.id, n]));
+  // Keep a function for compatibility with highlighting logic, but do not collapse nodes here.
+  // The relationship view must match the Mapping Explorer one-to-one.
+  window.productAlias = product => product;
+
+  const edges = [];
+  mappings.forEach(m => {
+    m.frameworks.forEach(f => {
+      if (window.nodeMap[f] && window.nodeMap[m.domain]) edges.push([f, m.domain]);
+    });
+    m.products.forEach(p => {
+      if (window.nodeMap[m.domain] && window.nodeMap[p]) edges.push([m.domain, p]);
+    });
+  });
+  const edgeUnique = [...new Set(edges.map(e => e.join('||')))].map(s => s.split('||'));
+  window.graphEdges = edgeUnique;
+
+  const center = n => ({x:n.x + n.w/2, y:n.y + n.h/2});
+  const pathFor = (a,b) => {
+    const n1 = window.nodeMap[a], n2 = window.nodeMap[b];
+    const p1 = {x:n1.x + n1.w, y:n1.y + n1.h/2};
+    const p2 = {x:n2.x, y:n2.y + n2.h/2};
+    const mx = (p1.x + p2.x) / 2;
+    return `M ${p1.x} ${p1.y} C ${mx} ${p1.y}, ${mx} ${p2.y}, ${p2.x} ${p2.y}`;
+  };
+  const nodeLabel = n => {
+    const maxLines = n.type === 'framework' ? 2 : n.type === 'product' ? 4 : 4;
+    const wrapChars = isPresentation ? (n.type === 'framework' ? 32 : n.type === 'product' ? 31 : 34) : (n.type === 'product' ? 24 : 26);
+    const lines = wrapLabel(n.id, wrapChars, maxLines);
+    const c = center(n);
+    const startY = c.y - ((lines.length - 1) * 7);
+    return lines.map((line, i) => `<text x="${c.x}" y="${startY + i*14}">${line}</text>`).join('');
+  };
+
+  window.graphSize = { width: graphWidth, height: graphHeight };
+  svg.setAttribute('viewBox', `0 0 ${graphWidth} ${graphHeight}`);
+  svg.style.height = `${graphHeight}px`;
+  svg.style.width = `${graphWidth}px`;
+  svg.innerHTML = `
+    <defs>
+      <filter id="glow"><feGaussianBlur stdDeviation="2.6" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 Z" fill="rgba(255,255,255,0.38)" /></marker>
+    </defs>
+    <text class="graph-label" x="${leftX + leftW / 2}" y="32" text-anchor="middle">Governance / Compliance / Architecture</text>
+    <text class="graph-label" x="${middleX + middleW / 2}" y="32" text-anchor="middle">Enterprise AI Security Domain</text>
+    <text class="graph-label" x="${rightX + rightW / 2}" y="32" text-anchor="middle">PANW Capability Area</text>
+    ${edgeUnique.map(([a,b]) => {
+      if(!window.nodeMap[a] || !window.nodeMap[b]) return '';
+      return `<path class="edge" data-a="${a}" data-b="${b}" d="${pathFor(a,b)}" fill="none" marker-end="url(#arrow)" />`;
+    }).join('')}
+    ${nodes.map(n => `
+      <g class="node" data-node="${n.id}" onclick="selectNode('${n.id.replace(/'/g, "\\'")}')">
+        <rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" rx="13" fill="${n.color}26" stroke="${n.color}" stroke-width="1.9" />
+        ${nodeLabel(n)}
+      </g>`).join('')}
+  `;
+}
+
+function wrapLabel(text, maxChars = 18, maxLines = 3) {
+  const words = text.split(' ');
+  const lines = [];
+  let current = '';
+  words.forEach(word => {
+    const candidate = current ? current + ' ' + word : word;
+    if (candidate.length <= maxChars) current = candidate;
+    else { if (current) lines.push(current); current = word; }
+  });
+  if (current) lines.push(current);
+  if (lines.length > maxLines) {
+    const kept = lines.slice(0, maxLines);
+    kept[maxLines - 1] = kept[maxLines - 1].replace(/\.*$/, '') + '…';
+    return kept;
+  }
+  return lines;
+}
+
+function productNodeMatches(id, product) {
+  const alias = window.productAlias ? window.productAlias(product) : product;
+  return alias === id || product === id;
+}
+
+function getMatchesForNode(id) {
+  return mappings.filter(m =>
+    m.frameworks.includes(id) ||
+    m.domain === id ||
+    m.products.some(p => productNodeMatches(id, p))
+  );
+}
+
+function edgeKey(a, b) {
+  return `${a}||${b}`;
+}
+
+function addActiveEdge(activeEdges, related, a, b) {
+  if (!window.nodeMap[a] || !window.nodeMap[b]) return;
+  activeEdges.add(edgeKey(a, b));
+  related.add(a);
+  related.add(b);
+}
+
+function buildHighlightForNode(id, matches) {
+  const selectedNode = window.nodeMap[id];
+  const selectedType = selectedNode ? selectedNode.type : null;
+  const related = new Set([id]);
+  const activeEdges = new Set();
+
+  matches.forEach(m => {
+    if (selectedType === 'framework') {
+      // Framework-first path: selected reference → mapped capability → all products delivering that capability.
+      addActiveEdge(activeEdges, related, id, m.domain);
+      m.products.forEach(p => addActiveEdge(activeEdges, related, m.domain, window.productAlias ? window.productAlias(p) : p));
+      return;
+    }
+
+    if (selectedType === 'product') {
+      // Product-first reverse path: frameworks → mapped capability → selected product only.
+      const selectedProductAppearsInMapping = m.products.some(p => productNodeMatches(id, p));
+      if (!selectedProductAppearsInMapping) return;
+      m.frameworks.forEach(f => addActiveEdge(activeEdges, related, f, m.domain));
+      addActiveEdge(activeEdges, related, m.domain, id);
+      return;
+    }
+
+    if (selectedType === 'domain') {
+      // Capability-centered path: all mapped frameworks → selected capability → all mapped products.
+      m.frameworks.forEach(f => addActiveEdge(activeEdges, related, f, m.domain));
+      m.products.forEach(p => addActiveEdge(activeEdges, related, m.domain, window.productAlias ? window.productAlias(p) : p));
+      return;
+    }
+
+    // Fallback: preserve a conservative full-chain highlight if a node type is missing.
+    m.frameworks.forEach(f => addActiveEdge(activeEdges, related, f, m.domain));
+    m.products.forEach(p => addActiveEdge(activeEdges, related, m.domain, window.productAlias ? window.productAlias(p) : p));
+  });
+
+  return { related, activeEdges };
+}
+
+function selectNode(id) {
+  const matches = getMatchesForNode(id);
+  const { related, activeEdges } = buildHighlightForNode(id, matches);
+
+  document.querySelectorAll('.node').forEach(n => {
+    const isSelected = n.dataset.node === id;
+    const isRelated = related.has(n.dataset.node);
+    n.classList.toggle('active', isSelected);
+    n.classList.toggle('path', !isSelected && isRelated);
+  });
+
+  document.querySelectorAll('.edge').forEach(e => {
+    const a = e.dataset.a, b = e.dataset.b;
+    e.classList.toggle('active', activeEdges.has(edgeKey(a, b)));
+  });
+
+  openDrawer(id, matches);
+}
+
+function openDrawer(id, matches) {
+  document.getElementById('drawerTitle').textContent = id;
+  const chains = matches.map(m => {
+    const products = m.products.map(p => `<span class="product-pill" style="border-color:${productColors[p]||'#ff6b6b'}55;background:${productColors[p]||'#ff6b6b'}22">${p}</span>`).join('');
+    return `<div class="chain-card">
+      <div class="small">${m.frameworks.join(' + ')}</div>
+      <strong>${m.domain}</strong>
+      <span class="chain-arrow">→</span>
+      <span>${m.capability.slice(0,2).join('; ')}</span>
+      <div style="margin-top:8px;">${products}</div>
+      <p class="small" style="margin:8px 0 0;">${m.value}</p>
+    </div>`;
+  }).join('');
+  document.getElementById('drawerContent').innerHTML = `
+    <p class="small">Related mappings: ${matches.length}. This view shows the connected path from governance or architecture reference to Enterprise AI Security Domain and then to PANW Capability Area.</p>
+    ${chains || '<p class="small">No mapped relationship found.</p>'}
+  `;
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.getElementById('detailsDrawer').classList.add('open');
+  document.getElementById('detailsDrawer').setAttribute('aria-hidden', 'false');
+}
+
+function closeDrawer() {
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.getElementById('detailsDrawer').classList.remove('open');
+  document.getElementById('detailsDrawer').setAttribute('aria-hidden', 'true');
+}
+
+function resetGraphSelection() {
+  document.querySelectorAll('.node').forEach(n => n.classList.remove('active','path'));
+  document.querySelectorAll('.edge').forEach(e => e.classList.remove('active'));
+  closeDrawer();
+}
+
+function fitMap() {
+  const canvas = document.getElementById('mapCanvas');
+  const svg = document.getElementById('graph');
+  if (!canvas || !svg || !window.graphSize) return;
+
+  // Make Fit Map idempotent. Always restore the SVG to its logical graph size
+  // before measuring the viewport; otherwise each click may calculate a new
+  // scale from an already-fitted visual size and progressively shrink the map.
+  canvas.classList.remove('fit-mode');
+  svg.style.width = `${window.graphSize.width}px`;
+  svg.style.height = `${window.graphSize.height}px`;
+  svg.style.minWidth = '0';
+  svg.style.minHeight = '0';
+
+  // Force layout after resetting the SVG dimensions.
+  void svg.offsetWidth;
+
+  const canvasRect = canvas.getBoundingClientRect();
+  const canvasStyle = window.getComputedStyle(canvas);
+  const horizontalPadding = parseFloat(canvasStyle.paddingLeft || 0) + parseFloat(canvasStyle.paddingRight || 0);
+  const verticalPadding = parseFloat(canvasStyle.paddingTop || 0) + parseFloat(canvasStyle.paddingBottom || 0);
+  const availableWidth = Math.max(320, canvasRect.width - horizontalPadding - 10);
+  const availableHeight = Math.max(320, canvasRect.height - verticalPadding - 10);
+  const widthScale = availableWidth / window.graphSize.width;
+  const heightScale = availableHeight / window.graphSize.height;
+  const isPresentation = !!(document.fullscreenElement && document.fullscreenElement.id === 'relationshipPanel');
+  const scale = isPresentation ? Math.min(widthScale, heightScale) : Math.min(widthScale, heightScale, 1);
+  const fittedWidth = Math.max(320, Math.floor(window.graphSize.width * scale));
+  const fittedHeight = Math.max(320, Math.floor(window.graphSize.height * scale));
+
+  canvas.classList.add('fit-mode');
+  svg.style.width = `${fittedWidth}px`;
+  svg.style.height = `${fittedHeight}px`;
+  svg.dataset.fitScale = scale.toFixed(4);
+  canvas.scrollLeft = 0;
+  canvas.scrollTop = 0;
+}
+
+function resetMapSize() {
+  const canvas = document.getElementById('mapCanvas');
+  const svg = document.getElementById('graph');
+  if (!canvas || !svg || !window.graphSize) return;
+  canvas.classList.remove('fit-mode');
+  svg.style.width = `${window.graphSize.width}px`;
+  svg.style.height = `${window.graphSize.height}px`;
+  svg.style.minWidth = '1180px';
+  svg.style.minHeight = '760px';
+}
+
+function toggleMapFullscreen() {
+  const panel = document.getElementById('relationshipPanel');
+  if (!document.fullscreenElement && panel.requestFullscreen) {
+    panel.requestFullscreen().then(() => {
+      // Fullscreen changes the available map area. Rebuild the graph with the
+      // presentation-specific wide layout, then fit it to the visible canvas.
+      setTimeout(() => { renderGraph(); fitMap(); }, 140);
+    }).catch(() => fitMap());
+  } else if (document.fullscreenElement && document.exitFullscreen) {
+    document.exitFullscreen();
+  }
+}
+
+document.addEventListener('fullscreenchange', () => {
+  if (document.fullscreenElement && document.fullscreenElement.id === 'relationshipPanel') {
+    setTimeout(() => { renderGraph(); fitMap(); }, 140);
+  } else {
+    setTimeout(() => { renderGraph(); resetMapSize(); }, 100);
+  }
+});
+
+window.addEventListener('resize', () => {
+  if (document.getElementById('relationshipPanel').classList.contains('active') && document.fullscreenElement) {
+    renderGraph();
+    fitMap();
+  }
+});
+
+function downloadCSV() {
+  const header = ['Domain','Reference Classification','References','Enterprise Challenge','Required Capabilities','PANW Products','Value'];
+  const rows = filterMappings().map(m => [m.domain, m.category, m.frameworks.join('; '), m.challenge, m.capability.join('; '), m.products.join('; '), m.value]);
+  const csv = [header, ...rows].map(row => row.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'enterprise-ai-security-governance-mapping.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function render() {
+  const data = filterMappings();
+  document.getElementById('metricReferences').textContent = frameworkList.length;
+  document.getElementById('metricDomains').textContent = domainList.length;
+  document.getElementById('metricCapabilities').textContent = productList.length;
+  document.getElementById('resultCount').textContent = `Showing ${data.length} of ${mappings.length} mappings`;
+  renderCards(data);
+  renderTable(data);
+}
+
+document.getElementById('search').addEventListener('input', render);
+renderFilters();
+renderGraph();
+render();
+</script>
+</body>
+</html>
