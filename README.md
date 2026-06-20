@@ -5,9 +5,9 @@ This prototype is designed for:
 * **AI security assessments**
 * **Product-value mapping discussions**
 
-### Key Updates (Version 22)
+### Key Updates
 
-Version 22 aligns the top metrics and **Relationship Map** terminology with the following three-layer model:
+Aligns the top metrics and **Relationship Map** terminology with the following three-layer model:
 > `Reference Layer` ➔ `Enterprise AI Security Domain` ➔ `PANW Capability Area`
 
 #### Architecture & Mapping Rules
