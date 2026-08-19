@@ -323,7 +323,7 @@
     <section class="hero shell">
       <div class="eyebrow">Secure the full AI lifecycle</div>
       <h1><span class="gradient">Zero Trust for AI Solution Finder</span></h1>
-      <p class="hero-copy" id="heroCopy">Start with the customer's AI use case, identify the security risk, map the required capability, and quickly reach the right solution across the AI lifecycle.</p>
+      <p class="hero-copy" id="heroCopy">Start with the customer's AI use case, identify the security or governance challenge, map the required capability, and quickly reach the right solution across the AI lifecycle.</p>
 
       <div class="search-wrap" role="search">
         <div class="search-box">
@@ -382,17 +382,17 @@ const lifecycleMeta = {
   using: {
     label: 'Using AI', number: '01', color: '#6d6cff',
     tagline: 'Secure how people and applications consume AI.',
-    short: 'Access · Visibility · Data · Audit'
+    short: 'Access · Visibility · Data · Audit · Cost Governance'
   },
   building: {
     label: 'Building AI', number: '02', color: '#ef18b8',
     tagline: 'Establish trust in AI components, code, and development workflows.',
-    short: 'Components · Models · Agents · Code'
+    short: 'Components · Models · Agents · Code · Dev AI FinOps'
   },
   running: {
     label: 'Running AI', number: '03', color: '#ff3f39',
     tagline: 'Continuously protect AI infrastructure, identities, interactions, and agent behavior.',
-    short: 'Infrastructure · Identity · Interaction · Behavior'
+    short: 'Infrastructure · Identity · Interaction · Behavior · Runtime FinOps'
   }
 };
 
@@ -421,15 +421,17 @@ const scenarios = [
   {
     id:'llm-api', life:'using', title:'LLM API Access',
     objective:'Govern how developers, applications, and workloads discover, access, and exchange data with LLM APIs.',
-    signals:['Direct LLM API usage','Developer API keys','Unapproved models','Application-to-LLM traffic','Prompt / response audit'],
+    signals:['Direct LLM API usage','Developer API keys','Unapproved models','Application-to-LLM traffic','Prompt / response audit','LLM token & cost visibility','Token / budget control'],
     questions:[
       'Which LLM providers and models are being called from applications or developer tools?',
       'Do you need to restrict access to approved LLMs only?',
       'Can sensitive data be sent through LLM APIs?',
       'Do you need centralized prompt and response logging?',
+      'Do you need visibility into token consumption and AI spend by user, application, team, or model?',
+      'Do you need token quotas or budget limits to control LLM consumption and cost?',
       'Is enforcement best placed inline, at the endpoint/workload, or through an AI gateway?'
     ],
-    keywords:['llm api','openai api','model api','api key','developer ai','api gateway'],
+    keywords:['llm api','openai api','model api','api key','developer ai','api gateway','ai gateway','token limit','budget limit','token usage','ai finops','finops','cost governance'],
     paths:[
       {threat:'Unmanaged LLMs, Agents & AI Assets', capability:'Inline Visibility & Enforcement', product:'NetSec', keywords:['shadow llm','shadow agent','visibility']},
       {threat:'Unmanaged LLMs, Agents & AI Assets', capability:'Endpoint Visibility & Enforcement', product:'AES', keywords:['shadow llm','endpoint','agent']},
@@ -437,7 +439,10 @@ const scenarios = [
       {threat:'Sensitive Data Leakage', capability:'Inline Data Protection', product:'AI Gateway + AIRS', note:'Combined solution', keywords:['dlp','data leakage','ai gateway','airs']},
       {threat:'Sensitive Data Leakage', capability:'Endpoint / Workload Data Protection', product:'AES / PAA / XDR DLP / PBY DLP', note:'Environment dependent', keywords:['endpoint dlp','workload dlp','paa','xdr dlp','pby dlp']},
       {threat:'Auditability & Compliance Gaps', capability:'Inline Prompt / Response Logging & Audit', product:'AI Gateway', keywords:['audit','prompt logging','response logging']},
-      {threat:'Auditability & Compliance Gaps', capability:'Endpoint Prompt Logging & Audit', product:'AES', status:'roadmap', keywords:['audit','prompt logging','aes','roadmap']}
+      {threat:'Auditability & Compliance Gaps', capability:'Endpoint Prompt Logging & Audit', product:'AES', status:'roadmap', keywords:['audit','prompt logging','aes','roadmap']},
+      {threat:'LLM Usage & Cost Governance Gaps', capability:'AI Usage & Token Observability', product:'AI Gateway', keywords:['observability','token usage','usage analytics','llm usage','cost visibility','ai gateway']},
+      {threat:'LLM Usage & Cost Governance Gaps', capability:'Token & Budget Guardrails', product:'AI Gateway', keywords:['token limit','token quota','budget limit','budget control','spend control','ai gateway']},
+      {threat:'LLM Usage & Cost Governance Gaps', capability:'AI FinOps & Cost Governance', product:'AI Gateway', keywords:['ai finops','finops','cost governance','cost attribution','showback','chargeback','spend analytics','ai gateway']}
     ]
   },
   {
@@ -465,22 +470,27 @@ const scenarios = [
   {
     id:'ai-assisted-dev', life:'building', title:'AI-Assisted Development / Vibe Coding',
     objective:'Keep AI-assisted development fast while controlling risky artifacts, agent actions, secrets, and vulnerable code.',
-    signals:['Coding agents','Vibe coding','MCP / skills installation','AI-generated code','Secrets in prompts or repos','Autonomous developer agents'],
+    signals:['Coding agents','Vibe coding','MCP / skills installation','AI-generated code','Secrets in prompts or repos','Autonomous developer agents','Rapid coding-agent token growth','Developer AI budget overruns'],
     questions:[
       'Are developers using coding agents or AI-assisted IDEs?',
       'Can agents install packages, MCPs, skills, or other development artifacts?',
       'Do you need to monitor or respond to abnormal development-agent behavior?',
       'Can secrets or credentials be exposed during AI-assisted development?',
+      'Do you need visibility into token consumption and AI spend by developer, coding agent, team, or model?',
+      'Do you need token quotas or budget limits for AI-assisted development?',
       'Do you need to scan agent source code before deployment?'
     ],
-    keywords:['vibe coding','coding agent','cursor','copilot','mcp','skills','ai generated code','secrets'],
+    keywords:['vibe coding','coding agent','cursor','copilot','mcp','skills','ai generated code','secrets','token usage','token limit','budget limit','ai finops','developer ai cost'],
     paths:[
       {threat:'Untrusted AI Development Artifacts', capability:'Artifact Discovery, Risk Assessment & Automated Remediation', product:'AES', keywords:['artifact discovery','remediation','mcp','skills']},
       {threat:'Untrusted AI Development Artifacts', capability:'AI Artifact Installation Control', product:'Supply Chain Gateway', keywords:['installation control','package control','mcp','skills']},
       {threat:'Malicious / Abnormal Development Agent Activity', capability:'Development Agent Activity Monitoring', product:'AES', keywords:['agent activity','coding agent monitoring']},
       {threat:'Malicious / Abnormal Development Agent Activity', capability:'AI Detection & Response', product:'AES', keywords:['detect response','malicious agent']},
       {threat:'Secrets & Credential Exposure', capability:'Secrets & Credential Detection & Protection', product:'AES', keywords:['secret','credential','token','api key']},
-      {threat:'AI-Generated Vulnerable Code', capability:'Agent Source Code Security Scanning', product:'AIRS Agent Artifact Scanning', keywords:['source code','vulnerable code','agent code','code scanning']}
+      {threat:'AI-Generated Vulnerable Code', capability:'Agent Source Code Security Scanning', product:'AIRS Agent Artifact Scanning', keywords:['source code','vulnerable code','agent code','code scanning']},
+      {threat:'Development AI Usage & Cost Governance Gaps', capability:'AI Usage & Token Observability', product:'AI Gateway', keywords:['coding agent observability','token usage','developer ai usage','cost visibility','ai gateway']},
+      {threat:'Development AI Usage & Cost Governance Gaps', capability:'Token & Budget Guardrails', product:'AI Gateway', keywords:['coding agent token limit','token quota','budget limit','developer budget','spend control','ai gateway']},
+      {threat:'Development AI Usage & Cost Governance Gaps', capability:'AI FinOps & Cost Governance', product:'AI Gateway', keywords:['ai finops','finops','developer ai cost','cost attribution','team cost','model cost','ai gateway']}
     ]
   },
   {
@@ -505,15 +515,17 @@ const scenarios = [
   {
     id:'prod-runtime', life:'running', title:'Production AI & Agent Runtime',
     objective:'Continuously verify agent identity, privilege, AI interactions, and runtime behavior once AI applications are in production.',
-    signals:['Production agents','High-privilege agents','Prompt injection concerns','Tool calling','Runtime data protection','Agent behavior monitoring'],
+    signals:['Production agents','High-privilege agents','Prompt injection concerns','Tool calling','Runtime data protection','Agent behavior monitoring','Runaway token consumption','Production AI budget overruns','Per-agent / app cost attribution'],
     questions:[
       'How are agent identities issued, authenticated, and governed?',
       'Can agents retain excessive or persistent privileges?',
       'Do you need runtime protection for prompts, responses, and tool calls?',
       'Where can runtime controls be enforced: API, AI gateway, SaaS, model hook, or network?',
+      'Do you need real-time visibility into token consumption and AI spend by application, agent, team, or model?',
+      'Do you need token quotas or budget limits to prevent runaway production AI consumption?',
       'Do you need to detect abnormal or malicious agent behavior over time?'
     ],
-    keywords:['production agent','agent runtime','prompt injection','jailbreak','tool call','agent identity','over privilege','behavior'],
+    keywords:['production agent','agent runtime','prompt injection','jailbreak','tool call','agent identity','over privilege','behavior','token usage','token limit','budget limit','ai finops','runtime cost'],
     paths:[
       {threat:'Agent Identity & Excessive Privilege Risks', capability:'Agent Identity Security', product:'Idira Identity Broker', keywords:['agent identity','privilege','identity broker']},
       {threat:'Agent Identity & Excessive Privilege Risks', capability:'Identity Threat Detection & Response (ITDR)', product:'Cortex Cloud ITDR', keywords:['itdr','identity threat','privilege']},
@@ -523,7 +535,10 @@ const scenarios = [
       {threat:'Prompt, Response & Tool Call Threats', capability:'Runtime Data Protection & Threat Prevention', enforcement:'LLM / Model Hook', product:'AIRS API Intercept', keywords:['model hook','llm hook','api intercept']},
       {threat:'Prompt, Response & Tool Call Threats', capability:'Runtime Data Protection & Threat Prevention', enforcement:'Network', product:'AIRS Network Intercept', keywords:['network intercept','prompt injection','data exfiltration']},
       {threat:'Malicious / Abnormal Agent Runtime Behavior', capability:'Agent Activity Monitoring', product:'AES', keywords:['agent activity','behavior monitoring','autonomous agent']},
-      {threat:'Malicious / Abnormal Agent Runtime Behavior', capability:'AI Detection & Response (AIDR)', product:'AES', keywords:['aidr','detect response','malicious agent']}
+      {threat:'Malicious / Abnormal Agent Runtime Behavior', capability:'AI Detection & Response (AIDR)', product:'AES', keywords:['aidr','detect response','malicious agent']},
+      {threat:'Runtime AI Usage & Cost Governance Gaps', capability:'AI Usage & Token Observability', enforcement:'AI Gateway', product:'AI Gateway', keywords:['runtime observability','token usage','usage analytics','cost visibility','ai gateway']},
+      {threat:'Runtime AI Usage & Cost Governance Gaps', capability:'Token & Budget Guardrails', enforcement:'AI Gateway', product:'AI Gateway', keywords:['token limit','token quota','budget limit','budget control','runaway cost','ai gateway']},
+      {threat:'Runtime AI Usage & Cost Governance Gaps', capability:'AI FinOps & Cost Governance', enforcement:'AI Gateway', product:'AI Gateway', keywords:['ai finops','finops','cost governance','cost attribution','showback','chargeback','production ai spend','ai gateway']}
     ]
   }
 ];
@@ -676,7 +691,7 @@ function renderDetail() {
     return `<div class="path-card ${p.enforcement?'has-enforcement':''}" style="--accent:${accent}">
       <div class="path-block"><div class="path-label">Threat / Challenge</div><div class="path-value">${p.threat}</div></div>
       <div class="arrow">→</div>
-      <div class="path-block"><div class="path-label">Security Capability</div><div class="path-value capability">${p.capability}</div></div>
+      <div class="path-block"><div class="path-label">Security & Governance Capability</div><div class="path-value capability">${p.capability}</div></div>
       <div class="arrow">→</div>
       ${enforcement}
       <div class="product-wrap">
@@ -761,14 +776,14 @@ function renderRelationshipMap(s, paths) {
     ? [
         {key:'scenario', label:'SCENARIO', x:28, width:210},
         {key:'threat', label:'THREAT / CHALLENGE', x:300, width:220},
-        {key:'capability', label:'SECURITY CAPABILITY', x:590, width:230},
+        {key:'capability', label:'SECURITY & GOVERNANCE CAPABILITY', x:590, width:230},
         {key:'enforcement', label:'ENFORCEMENT POINT', x:890, width:205},
         {key:'product', label:'PRODUCT', x:1160, width:220}
       ]
     : [
         {key:'scenario', label:'SCENARIO', x:28, width:220},
         {key:'threat', label:'THREAT / CHALLENGE', x:330, width:230},
-        {key:'capability', label:'SECURITY CAPABILITY', x:650, width:240},
+        {key:'capability', label:'SECURITY & GOVERNANCE CAPABILITY', x:650, width:240},
         {key:'product', label:'PRODUCT', x:980, width:230}
       ];
   const W = hasEnforcement ? 1410 : 1240;
@@ -868,7 +883,7 @@ function renderRelationshipMap(s, paths) {
       <span class="hint">Hover a node to trace only its connected solution paths${paths.some(p=>p.status==='roadmap')?' · dashed line = roadmap':''}</span>
     </div>
     <div class="relationship-scroll">
-      <svg class="relationship-map" viewBox="0 0 ${W} ${H}" role="img" aria-label="Relationship map from scenario through threats and capabilities to products">
+      <svg class="relationship-map" viewBox="0 0 ${W} ${H}" role="img" aria-label="Relationship map from scenario through threats or challenges and required capabilities to products">
         ${guides}${labels}${edges}${nodes}
       </svg>
     </div>
@@ -957,8 +972,8 @@ function setAudience(mode) {
 
 function updateHeroCopy() {
   byId('heroCopy').textContent = audience==='sales'
-    ? "Start with the customer's AI use case, identify the security risk, map the required capability, and quickly reach the right solution across the AI lifecycle."
-    : 'Explore customer-ready AI scenarios, security risks, required capabilities, enforcement choices, and available solution options.';
+    ? "Start with the customer's AI use case, identify the security or governance challenge, map the required capability, and quickly reach the right solution across the AI lifecycle."
+    : 'Explore customer-ready AI scenarios, security and governance challenges, required capabilities, enforcement choices, and available solution options.';
 }
 
 byId('presentBtn').addEventListener('click', async () => {
