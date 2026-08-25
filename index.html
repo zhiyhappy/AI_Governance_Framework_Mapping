@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="htmlRoot">
 <head>
   <link rel="icon" type="image/png" href="icon.png">
   <meta charset="UTF-8" />
@@ -510,11 +510,38 @@
     .toggle-row { display: flex; gap: 8px; flex-wrap: wrap; }
     .export-area { display: none; }
     .footnote { color: #7f96aa; font-size: 12px; margin-top: 18px; }
+    .section-toggle-btn {
+      display: none;
+      background: none;
+      border: none;
+      padding: 0;
+      margin: 0;
+      cursor: pointer;
+      color: var(--muted);
+      line-height: 1;
+      border-radius: 6px;
+    }
+    .section-toggle-btn svg { display: block; transition: transform 0.2s ease; }
+    .sidebar-section.collapsed .section-toggle-btn svg { transform: rotate(-90deg); }
+    .section-body { overflow: hidden; }
+    .mobile-map-hint { display: none; }
     @media (max-width: 1160px) {
       .app { grid-template-columns: 1fr; }
       aside { position: relative; height: auto; }
       .hero { grid-template-columns: 1fr; }
       .mapper-columns { grid-template-columns: repeat(2, 1fr); }
+      .section-toggle-btn { display: flex; align-items: center; }
+      .section-kicker-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        user-select: none;
+      }
+      .sidebar-section.collapsed .section-body {
+        display: none;
+      }
+      .mobile-map-hint { display: block; }
     }
     @media (max-width: 680px) {
       main, aside { padding: 18px; }
@@ -529,6 +556,27 @@
       .panel, .hero-card, .mapper-card { box-shadow: none; border: 1px solid #ccc; background: #fff; color: #111; }
       p, .small, .column-box ul, .source-list li, .level-copy { color: #333; }
     }
+    .lang-switch {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin: 12px 0 4px;
+    }
+    .lang-switch button {
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .lang-switch button.active {
+      background: rgba(55,213,255,0.15);
+      border-color: rgba(55,213,255,0.4);
+      color: var(--accent-2);
+    }
   </style>
 </head>
 <body>
@@ -537,91 +585,126 @@
       <div class="brand">
         <div class="brand-mark" aria-hidden="true"></div>
         <div>
-          <div class="brand-title">AI Governance Mapper</div>
-          <div class="brand-sub">Governance → Controls → PANW Portfolio</div>
+          <div class="brand-title" data-i18n="brandTitle">AI Governance Mapper</div>
+          <div class="brand-sub" data-i18n="brandSub">Governance → Controls → PANW Portfolio</div>
         </div>
+      </div>
+      <div class="lang-switch" id="langSwitch" aria-label="Language selector">
+        <button data-lang="en" onclick="setLang('en')">EN</button>
+        <button data-lang="zh-CN" onclick="setLang('zh-CN')">简</button>
+        <button data-lang="zh-TW" onclick="setLang('zh-TW')">繁</button>
+        <button data-lang="ja" onclick="setLang('ja')">日</button>
+        <button data-lang="ko" onclick="setLang('ko')">한</button>
       </div>
 
       <div class="filter-group search-block">
-        <div class="filter-title">Search</div>
-        <input id="search" class="input" placeholder="Search risk, capability, PANW area..." />
+        <div id="searchLabel" class="filter-title" data-i18n="searchLabel">Search</div>
+        <input id="search" class="input" placeholder="Search risk, capability, PANW area..." data-i18n="searchPlaceholder" data-i18n-attr="placeholder" />
       </div>
 
       <div class="sidebar-stack" aria-label="Filter and utility controls">
-        <section class="sidebar-section reference-layer">
-          <div class="section-kicker">01 Reference Layer</div>
-          <div class="filter-title">Governance, Compliance & Security Architecture Reference</div>
-          <p class="filter-desc">Select the external governance, compliance, or security architecture reference that creates the requirement or control intent.</p>
-          <div id="frameworkFilters" class="chip-list"></div>
+        <section class="sidebar-section reference-layer collapsed">
+          <div class="section-kicker-row" onclick="toggleSection(this.closest('.sidebar-section'))">
+            <div class="section-kicker" data-i18n="refLayerKicker">01 Reference Layer</div>
+            <button class="section-toggle-btn" aria-label="Toggle section" tabindex="-1">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+          <div class="section-body">
+            <div class="filter-title" data-i18n="refLayerTitle">Governance, Compliance & Security Architecture Reference</div>
+            <p class="filter-desc" data-i18n="refLayerDesc">Select the external governance, compliance, or security architecture reference that creates the requirement or control intent.</p>
+            <div id="frameworkFilters" class="chip-list"></div>
+          </div>
         </section>
 
-        <section class="sidebar-section domain-layer">
-          <div class="section-kicker">02 Risk Domain</div>
-          <div class="filter-title">Enterprise AI Security Domain</div>
-          <p class="filter-desc">Select the enterprise AI risk domain that converts governance expectations into security control needs.</p>
-          <div id="domainFilters" class="chip-list"></div>
+        <section class="sidebar-section domain-layer collapsed">
+          <div class="section-kicker-row" onclick="toggleSection(this.closest('.sidebar-section'))">
+            <div class="section-kicker" data-i18n="domainLayerKicker">02 Risk Domain</div>
+            <button class="section-toggle-btn" aria-label="Toggle section" tabindex="-1">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+          <div class="section-body">
+            <div class="filter-title" data-i18n="domainLayerTitle">Enterprise AI Security Domain</div>
+            <p class="filter-desc" data-i18n="domainLayerDesc">Select the enterprise AI risk domain that converts governance expectations into security control needs.</p>
+            <div id="domainFilters" class="chip-list"></div>
+          </div>
         </section>
 
-        <section class="sidebar-section capability-layer">
-          <div class="section-kicker">03 PANW Capability</div>
-          <div class="filter-title">PANW Capability Area</div>
-          <p class="filter-desc">Select the Palo Alto Networks capability area that operationalizes the required AI security controls.</p>
-          <div id="productFilters" class="chip-list"></div>
+        <section class="sidebar-section capability-layer collapsed">
+          <div class="section-kicker-row" onclick="toggleSection(this.closest('.sidebar-section'))">
+            <div class="section-kicker" data-i18n="capLayerKicker">03 PANW Capability</div>
+            <button class="section-toggle-btn" aria-label="Toggle section" tabindex="-1">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+          <div class="section-body">
+            <div class="filter-title" data-i18n="capLayerTitle">PANW Capability Area</div>
+            <p class="filter-desc" data-i18n="capLayerDesc">Select the Palo Alto Networks capability area that operationalizes the required AI security controls.</p>
+            <div id="productFilters" class="chip-list"></div>
+          </div>
         </section>
 
-        <section class="sidebar-section utilities-layer">
-          <div class="section-kicker">Utilities</div>
-          <div class="filter-title">Output & Session Controls</div>
-          <p class="filter-desc">Reset the current analysis view, export the filtered mapping data, or print the current tool view as a PDF.</p>
-          <div class="actions utility-actions">
-            <button class="primary" onclick="resetFilters()">Reset Filters</button>
-            <button class="ghost" onclick="downloadCSV()">Export CSV</button>
-            <button class="ghost" onclick="window.print()">Print / PDF</button>
+        <section class="sidebar-section utilities-layer collapsed">
+          <div class="section-kicker-row" onclick="toggleSection(this.closest('.sidebar-section'))">
+            <div class="section-kicker" data-i18n="utilitiesKicker">Utilities</div>
+            <button class="section-toggle-btn" aria-label="Toggle section" tabindex="-1">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+          <div class="section-body">
+            <div class="filter-title" data-i18n="utilitiesTitle">Output & Session Controls</div>
+            <p class="filter-desc" data-i18n="utilitiesDesc">Reset the current analysis view, export the filtered mapping data, or print the current tool view as a PDF.</p>
+            <div class="actions utility-actions">
+              <button class="primary" onclick="resetFilters()" data-i18n="btnReset">Reset Filters</button>
+              <button class="ghost" onclick="downloadCSV()" data-i18n="btnExportCSV">Export CSV</button>
+              <button class="ghost" onclick="window.print()" data-i18n="btnPrint">Print / PDF</button>
+            </div>
           </div>
         </section>
       </div>
 
-      <p class="footnote">This prototype is designed for executive workshops, AI security assessments, and product-value mapping discussions. Version 22 aligns the top metrics and Relationship Map terminology with the three-layer model: Reference Layer → Enterprise AI Security Domain → PANW Capability Area. Zero Trust is treated as a NIST SP 800-207-aligned security architecture reference; Prisma SASE is treated as the underlying Zero Trust/SASE delivery architecture rather than a standalone PANW capability node; and the Relationship Map is generated from the same mapping data source as the Mapping Explorer. Validate product availability and packaging before using it as customer-facing material.</p>
+      <p class="footnote" data-i18n="footnote">This prototype is designed for executive workshops, AI security assessments, and product-value mapping discussions. Version 22 aligns the top metrics and Relationship Map terminology with the three-layer model: Reference Layer → Enterprise AI Security Domain → PANW Capability Area. Zero Trust is treated as a NIST SP 800-207-aligned security architecture reference; Prisma SASE is treated as the underlying Zero Trust/SASE delivery architecture rather than a standalone PANW capability node; and the Relationship Map is generated from the same mapping data source as the Mapping Explorer. Validate product availability and packaging before using it as customer-facing material.</p>
     </aside>
 
     <main>
       <section class="hero">
         <div class="hero-card">
-          <h1>Enterprise AI Security Governance Framework</h1>
-          <p class="hero-pitch">A practical mapping tool that translates AI governance and compliance expectations into enterprise security capabilities and Palo Alto Networks solution areas across users, applications, agents, browsers, endpoints, data, and runtime.</p>
+          <h1 data-i18n="heroH1">Enterprise AI Security Governance Framework</h1>
+          <p class="hero-pitch" data-i18n="heroPitch">A practical mapping tool that translates AI governance and compliance expectations into enterprise security capabilities and Palo Alto Networks solution areas across users, applications, agents, browsers, endpoints, data, and runtime.</p>
           <div class="hero-metrics">
-            <div class="metric"><strong id="metricReferences">0</strong><span>governance/security references</span></div>
-            <div class="metric"><strong id="metricDomains">0</strong><span>Enterprise AI Security Domains</span></div>
-            <div class="metric"><strong id="metricCapabilities">0</strong><span>PANW Capability Areas</span></div>
+            <div class="metric"><strong id="metricReferences">0</strong><span data-i18n="metricRefLabel">governance/security references</span></div>
+            <div class="metric"><strong id="metricDomains">0</strong><span data-i18n="metricDomainLabel">Enterprise AI Security Domains</span></div>
+            <div class="metric"><strong id="metricCapabilities">0</strong><span data-i18n="metricCapLabel">PANW Capability Areas</span></div>
           </div>
         </div>
         <div class="hero-card summary-card">
-          <h2>Core Message</h2>
-          <p>AI governance should not stop at policies, inventories, and compliance checklists. It must be operationalized through enforceable security controls.</p>
+          <h2 data-i18n="coreMessageTitle">Core Message</h2>
+          <p data-i18n="coreMessageP">AI governance should not stop at policies, inventories, and compliance checklists. It must be operationalized through enforceable security controls.</p>
           <div class="journey">
-            <div class="journey-step"><div class="step-no">1</div><div><div class="step-title">Governance intent</div><div class="step-copy">NIST AI RMF, ISO/IEC 42001, NIST GenAI Profile, EU AI Act, NIST SP 800-207 Zero Trust Architecture</div></div></div>
-            <div class="journey-step"><div class="step-no">2</div><div><div class="step-title">Enterprise AI Security Domains</div><div class="step-copy">GenAI access, data, application runtime, model and agent artifact supply chain, agent, endpoint, browser, monitoring</div></div></div>
-            <div class="journey-step"><div class="step-no">3</div><div><div class="step-title">Security control plane</div><div class="step-copy">Palo Alto Networks portfolio aligned to real-world enforcement points</div></div></div>
+            <div class="journey-step"><div class="step-no">1</div><div><div class="step-title" data-i18n="step1Title">Governance intent</div><div class="step-copy" data-i18n="step1Copy">NIST AI RMF, ISO/IEC 42001, NIST GenAI Profile, EU AI Act, NIST SP 800-207 Zero Trust Architecture</div></div></div>
+            <div class="journey-step"><div class="step-no">2</div><div><div class="step-title" data-i18n="step2Title">Enterprise AI Security Domains</div><div class="step-copy" data-i18n="step2Copy">GenAI access, data, application runtime, model and agent artifact supply chain, agent, endpoint, browser, monitoring</div></div></div>
+            <div class="journey-step"><div class="step-no">3</div><div><div class="step-title" data-i18n="step3Title">Security control plane</div><div class="step-copy" data-i18n="step3Copy">Palo Alto Networks portfolio aligned to real-world enforcement points</div></div></div>
           </div>
         </div>
       </section>
 
       <nav class="top-tabs" aria-label="Main views">
-        <button id="tabMapping" class="tab-button active" onclick="setActiveTab('mapping')">Mapping Explorer</button>
-        <button id="tabMap" class="tab-button" onclick="setActiveTab('map')">Relationship Map</button>
-        <button id="tabJourney" class="tab-button" onclick="setActiveTab('journey')">Deployment Journey</button>
+        <button id="tabMapping" class="tab-button active" onclick="setActiveTab('mapping')" data-i18n="tabMapping">Mapping Explorer</button>
+        <button id="tabMap" class="tab-button" onclick="setActiveTab('map')" data-i18n="tabMap">Relationship Map</button>
+        <button id="tabJourney" class="tab-button" onclick="setActiveTab('journey')" data-i18n="tabJourney">Deployment Journey</button>
       </nav>
 
       <section id="mappingPanel" class="tab-panel active">
         <div class="panel">
           <div class="section-head">
             <div>
-              <h2>Interactive Framework Mapping</h2>
+              <h2 data-i18n="mappingTitle">Interactive Framework Mapping</h2>
               <div class="small" id="resultCount">Showing all mappings</div>
             </div>
             <div class="toggle-row">
-              <button id="viewCards" class="chip active" onclick="setView('cards')">Cards</button>
-              <button id="viewTable" class="chip" onclick="setView('table')">Table</button>
+              <button id="viewCards" class="chip active" onclick="setView('cards')" data-i18n="viewCards">Cards</button>
+              <button id="viewTable" class="chip" onclick="setView('table')" data-i18n="viewTable">Table</button>
             </div>
           </div>
           <div id="cardsView" class="mapper-grid"></div>
@@ -633,43 +716,44 @@
         <div class="panel relationship">
           <div class="section-head">
             <div>
-              <h2>Reference-to-Control-to-Capability Map</h2>
-              <div class="small">Full-width swimlane view: governance framework, regulation, or security architecture reference → Enterprise AI Security Domain → PANW Capability Area.</div>
+              <h2 data-i18n="mapTitle">Reference-to-Control-to-Capability Map</h2>
+              <div class="small" data-i18n="mapSubtitle">Full-width swimlane view: governance framework, regulation, or security architecture reference → Enterprise AI Security Domain → PANW Capability Area.</div>
             </div>
           </div>
+          <p class="mobile-map-hint small" style="background:rgba(255,209,102,0.08);border:1px solid rgba(255,209,102,0.25);border-radius:10px;padding:10px 14px;margin-bottom:14px;" data-i18n="mobileMapHint">The Relationship Map is designed for desktop viewing. Rotate your device to landscape or open this page on a larger screen for the best experience.</p>
           <div class="map-toolbar">
-            <div class="small">Click any node to highlight the related governance-to-control-to-capability path and open details.</div>
+            <div class="small" data-i18n="mapToolbarHint">Click any node to highlight the related governance-to-control-to-capability path and open details.</div>
             <div class="toggle-row">
-              <button class="chip" onclick="resetGraphSelection()">Clear Highlight</button>
-              <button class="chip" onclick="fitMap()">Fit Map</button>
-              <button class="chip" onclick="toggleMapFullscreen()">Presentation Mode</button>
+              <button class="chip" onclick="resetGraphSelection()" data-i18n="btnClearHighlight">Clear Highlight</button>
+              <button class="chip" onclick="fitMap()" data-i18n="btnFitMap">Fit Map</button>
+              <button class="chip" onclick="toggleMapFullscreen()" data-i18n="btnPresentation">Presentation Mode</button>
             </div>
           </div>
           <div id="mapCanvas" class="map-canvas">
             <svg id="graph" class="graph-svg" viewBox="0 0 1260 760" role="img" aria-label="Relationship map between AI governance frameworks, compliance references, security architecture references, Enterprise AI Security Domains and PANW Capability Areas"></svg>
           </div>
           <div class="map-hint">
-            <div><strong>1. Governance / Compliance / Architecture Reference</strong><br>Governance, compliance, and security architecture expectations from NIST AI RMF, ISO/IEC 42001, NIST AI 600-1, EU AI Act, and NIST SP 800-207 Zero Trust Architecture.</div>
-            <div><strong>2. Enterprise AI Security Domain</strong><br>Enterprise AI security domains that translate governance and compliance expectations into concrete areas of control such as access, data protection, runtime defense, supply chain, endpoint, browser, monitoring, and Zero Trust for AI.</div>
-            <div><strong>3. PANW Capability Area</strong><br>PANW capability areas that operationalize AI governance across AI access, browser, endpoint, agent, runtime, data, posture, and SOC layers. Prisma SASE is treated as the underlying Zero Trust delivery architecture, not as a standalone capability node.</div>
+            <div id="mapHint1"><strong>1. Governance / Compliance / Architecture Reference</strong><br>Governance, compliance, and security architecture expectations from NIST AI RMF, ISO/IEC 42001, NIST AI 600-1, EU AI Act, and NIST SP 800-207 Zero Trust Architecture.</div>
+            <div id="mapHint2"><strong>2. Enterprise AI Security Domain</strong><br>Enterprise AI security domains that translate governance and compliance expectations into concrete areas of control such as access, data protection, runtime defense, supply chain, endpoint, browser, monitoring, and Zero Trust for AI.</div>
+            <div id="mapHint3"><strong>3. PANW Capability Area</strong><br>PANW capability areas that operationalize AI governance across AI access, browser, endpoint, agent, runtime, data, posture, and SOC layers. Prisma SASE is treated as the underlying Zero Trust delivery architecture, not as a standalone capability node.</div>
           </div>
         </div>
       </section>
 
       <section id="journeyPanel" class="tab-panel">
         <div class="panel">
-          <h2>Suggested Adoption Journey</h2>
+          <h2 data-i18n="journeyTitle">Suggested Adoption Journey</h2>
           <div class="maturity">
-            <div class="level"><div class="level-no">Stage 1</div><div class="level-title">Visibility</div><div class="level-copy">Discover AI apps, shadow AI, agents, tools, browser workflows, endpoint AI artifacts, and data flows.</div></div>
-            <div class="level"><div class="level-no">Stage 2</div><div class="level-title">Assessment</div><div class="level-copy">Classify AI use cases, assess risk, test models and agents, verify identity, and evaluate data exposure.</div></div>
-            <div class="level"><div class="level-no">Stage 3</div><div class="level-title">Enforcement</div><div class="level-copy">Apply Zero Trust access, data protection, runtime controls, browser guardrails, and endpoint policy.</div></div>
-            <div class="level"><div class="level-no">Stage 4</div><div class="level-title">Response</div><div class="level-copy">Monitor drift, detect misuse, correlate events, automate response, preserve audit evidence, and continuously improve.</div></div>
+            <div class="level"><div class="level-no" data-i18n="stage1No">Stage 1</div><div class="level-title" data-i18n="stage1Title">Visibility</div><div class="level-copy" data-i18n="stage1Copy">Discover AI apps, shadow AI, agents, tools, browser workflows, endpoint AI artifacts, and data flows.</div></div>
+            <div class="level"><div class="level-no" data-i18n="stage2No">Stage 2</div><div class="level-title" data-i18n="stage2Title">Assessment</div><div class="level-copy" data-i18n="stage2Copy">Classify AI use cases, assess risk, test models and agents, verify identity, and evaluate data exposure.</div></div>
+            <div class="level"><div class="level-no" data-i18n="stage3No">Stage 3</div><div class="level-title" data-i18n="stage3Title">Enforcement</div><div class="level-copy" data-i18n="stage3Copy">Apply Zero Trust access, data protection, runtime controls, browser guardrails, and endpoint policy.</div></div>
+            <div class="level"><div class="level-no" data-i18n="stage4No">Stage 4</div><div class="level-title" data-i18n="stage4Title">Response</div><div class="level-copy" data-i18n="stage4Copy">Monitor drift, detect misuse, correlate events, automate response, preserve audit evidence, and continuously improve.</div></div>
           </div>
         </div>
       </section>
 
       <section class="panel source-panel">
-        <h2>Reference Sources Embedded in the Prototype</h2>
+        <h2 data-i18n="sourcesTitle">Reference Sources Embedded in the Prototype</h2>
         <ul class="source-list">
           <li>NIST AI Risk Management Framework: <a href="https://www.nist.gov/itl/ai-risk-management-framework" target="_blank" rel="noopener">nist.gov/itl/ai-risk-management-framework</a></li>
           <li>NIST AI 600-1 Generative AI Profile: <a href="https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf" target="_blank" rel="noopener">nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf</a></li>
@@ -692,19 +776,654 @@
   <div id="detailsDrawer" class="details-drawer" aria-hidden="true">
     <div class="drawer-head">
       <div>
-        <div class="filter-title">Selected Path</div>
-        <h2 id="drawerTitle" style="margin:0;">Relationship Details</h2>
+        <div class="filter-title" data-i18n="drawerLabel">Selected Path</div>
+        <h2 id="drawerTitle" style="margin:0;" data-i18n="drawerDefaultTitle">Relationship Details</h2>
       </div>
-      <button class="drawer-close ghost" onclick="closeDrawer()">Close</button>
+      <button class="drawer-close ghost" onclick="closeDrawer()" data-i18n="drawerClose">Close</button>
     </div>
     <div id="drawerContent">
-      <p class="small">Select a node in the relationship map to view the mapped reference, Enterprise AI Security Domain, and PANW Capability Areas.</p>
+      <p class="small" data-i18n="drawerDefault">Select a node in the relationship map to view the mapped reference, Enterprise AI Security Domain, and PANW Capability Areas.</p>
     </div>
   </div>
 
   <textarea id="csvData" class="export-area"></textarea>
 
 <script>
+const TRANSLATIONS = {
+  en: {
+    brandTitle: 'AI Governance Mapper',
+    brandSub: 'Governance → Controls → PANW Portfolio',
+    searchLabel: 'Search',
+    searchPlaceholder: 'Search risk, capability, PANW area...',
+    refLayerKicker: '01 Reference Layer',
+    refLayerTitle: 'Governance, Compliance & Security Architecture Reference',
+    refLayerDesc: 'Select the external governance, compliance, or security architecture reference that creates the requirement or control intent.',
+    domainLayerKicker: '02 Risk Domain',
+    domainLayerTitle: 'Enterprise AI Security Domain',
+    domainLayerDesc: 'Select the enterprise AI risk domain that converts governance expectations into security control needs.',
+    capLayerKicker: '03 PANW Capability',
+    capLayerTitle: 'PANW Capability Area',
+    capLayerDesc: 'Select the Palo Alto Networks capability area that operationalizes the required AI security controls.',
+    utilitiesKicker: 'Utilities',
+    utilitiesTitle: 'Output & Session Controls',
+    utilitiesDesc: 'Reset the current analysis view, export the filtered mapping data, or print the current tool view as a PDF.',
+    btnReset: 'Reset Filters',
+    btnExportCSV: 'Export CSV',
+    btnPrint: 'Print / PDF',
+    heroH1: 'Enterprise AI Security Governance Framework',
+    heroPitch: 'A practical mapping tool that translates AI governance and compliance expectations into enterprise security capabilities and Palo Alto Networks solution areas across users, applications, agents, browsers, endpoints, data, and runtime.',
+    metricRefLabel: 'governance/security references',
+    metricDomainLabel: 'Enterprise AI Security Domains',
+    metricCapLabel: 'PANW Capability Areas',
+    coreMessageTitle: 'Core Message',
+    coreMessageP: 'AI governance should not stop at policies, inventories, and compliance checklists. It must be operationalized through enforceable security controls.',
+    step1Title: 'Governance intent',
+    step1Copy: 'NIST AI RMF, ISO/IEC 42001, NIST GenAI Profile, EU AI Act, NIST SP 800-207 Zero Trust Architecture',
+    step2Title: 'Enterprise AI Security Domains',
+    step2Copy: 'GenAI access, data, application runtime, model and agent artifact supply chain, agent, endpoint, browser, monitoring',
+    step3Title: 'Security control plane',
+    step3Copy: 'Palo Alto Networks portfolio aligned to real-world enforcement points',
+    tabMapping: 'Mapping Explorer',
+    tabMap: 'Relationship Map',
+    tabJourney: 'Deployment Journey',
+    mappingTitle: 'Interactive Framework Mapping',
+    showingAll: 'Showing all mappings',
+    showingFiltered: 'Showing {count} of {total} mappings',
+    viewCards: 'Cards',
+    viewTable: 'Table',
+    emptyState: 'No matching mappings. Try clearing one or more filters.',
+    emptyStateTable: 'No matching mappings.',
+    colRef: 'Reference Classification',
+    colChallenge: 'Enterprise Challenge',
+    colCapability: 'Required Capability',
+    colPANW: 'PANW Capability Mapping',
+    solutionAreas: 'solution areas',
+    tableDomain: 'Domain',
+    tableRef: 'Reference Classification',
+    tableChallenge: 'Enterprise Challenge',
+    tableCaps: 'Required Capabilities',
+    tablePANW: 'PANW Capability Mapping',
+    mapTitle: 'Reference-to-Control-to-Capability Map',
+    mapSubtitle: 'Full-width swimlane view: governance framework, regulation, or security architecture reference → Enterprise AI Security Domain → PANW Capability Area.',
+    mapToolbarHint: 'Click any node to highlight the related governance-to-control-to-capability path and open details.',
+    btnClearHighlight: 'Clear Highlight',
+    btnFitMap: 'Fit Map',
+    btnPresentation: 'Presentation Mode',
+    mapHint1: '<strong>1. Governance / Compliance / Architecture Reference</strong><br>Governance, compliance, and security architecture expectations from NIST AI RMF, ISO/IEC 42001, NIST AI 600-1, EU AI Act, and NIST SP 800-207 Zero Trust Architecture.',
+    mapHint2: '<strong>2. Enterprise AI Security Domain</strong><br>Enterprise AI security domains that translate governance and compliance expectations into concrete areas of control such as access, data protection, runtime defense, supply chain, endpoint, browser, monitoring, and Zero Trust for AI.',
+    mapHint3: '<strong>3. PANW Capability Area</strong><br>PANW capability areas that operationalize AI governance across AI access, browser, endpoint, agent, runtime, data, posture, and SOC layers. Prisma SASE is treated as the underlying Zero Trust delivery architecture, not as a standalone capability node.',
+    journeyTitle: 'Suggested Adoption Journey',
+    stage1No: 'Stage 1', stage1Title: 'Visibility',
+    stage1Copy: 'Discover AI apps, shadow AI, agents, tools, browser workflows, endpoint AI artifacts, and data flows.',
+    stage2No: 'Stage 2', stage2Title: 'Assessment',
+    stage2Copy: 'Classify AI use cases, assess risk, test models and agents, verify identity, and evaluate data exposure.',
+    stage3No: 'Stage 3', stage3Title: 'Enforcement',
+    stage3Copy: 'Apply Zero Trust access, data protection, runtime controls, browser guardrails, and endpoint policy.',
+    stage4No: 'Stage 4', stage4Title: 'Response',
+    stage4Copy: 'Monitor drift, detect misuse, correlate events, automate response, preserve audit evidence, and continuously improve.',
+    sourcesTitle: 'Reference Sources Embedded in the Prototype',
+    drawerLabel: 'Selected Path',
+    drawerDefaultTitle: 'Relationship Details',
+    drawerClose: 'Close',
+    drawerDefault: 'Select a node in the relationship map to view the mapped reference, Enterprise AI Security Domain, and PANW Capability Areas.',
+    drawerRelated: 'Related mappings: {count}. This view shows the connected path from governance or architecture reference to Enterprise AI Security Domain and then to PANW Capability Area.',
+    drawerNoRelation: 'No mapped relationship found.',
+    svgColLeft: 'Governance / Compliance / Architecture',
+    svgColMid: 'Enterprise AI Security Domain',
+    svgColRight: 'PANW Capability Area',
+    footnote: 'This prototype is designed for executive workshops, AI security assessments, and product-value mapping discussions. Version 22 aligns the top metrics and Relationship Map terminology with the three-layer model: Reference Layer → Enterprise AI Security Domain → PANW Capability Area. Zero Trust is treated as a NIST SP 800-207-aligned security architecture reference; Prisma SASE is treated as the underlying Zero Trust/SASE delivery architecture rather than a standalone PANW capability node; and the Relationship Map is generated from the same mapping data source as the Mapping Explorer. Validate product availability and packaging before using it as customer-facing material.',
+    mobileMapHint: 'The Relationship Map is designed for desktop viewing. Rotate your device to landscape or open this page on a larger screen for the best experience.',
+    csvHeader: 'Domain,Reference Classification,References,Enterprise Challenge,Required Capabilities,PANW Products,Value',
+    domainLabels: {
+      'Governance Operating Model': 'Governance Operating Model',
+      'GenAI Access & Shadow AI Control': 'GenAI Access & Shadow AI Control',
+      'AI Data Protection': 'AI Data Protection',
+      'AI Application & Runtime Risk': 'AI Application & Runtime Risk',
+      'AI Model & Agent Artifact Supply Chain Risk': 'AI Model & Agent Artifact Supply Chain Risk',
+      'AI Assurance & Red Teaming': 'AI Assurance & Red Teaming',
+      'Agentic Endpoint Risk': 'Agentic Endpoint Risk',
+      'Agentic Browser Risk': 'Agentic Browser Risk',
+      'Third-Party AI Supply Chain Risk': 'Third-Party AI Supply Chain Risk',
+      'AI Monitoring & Response': 'AI Monitoring & Response',
+      'Regulated / High-Risk AI': 'Regulated / High-Risk AI',
+      'Zero Trust for AI': 'Zero Trust for AI',
+    },
+  },
+  'zh-CN': {
+    brandTitle: 'AI 治理映射工具',
+    brandSub: '治理 → 控制 → PANW 产品组合',
+    searchLabel: '搜索',
+    searchPlaceholder: '搜索风险、能力、PANW 领域...',
+    refLayerKicker: '01 参考层',
+    refLayerTitle: '治理、合规与安全架构参考',
+    refLayerDesc: '选择外部治理、合规或安全架构参考，该参考定义了控制要求或控制意图。',
+    domainLayerKicker: '02 风险领域',
+    domainLayerTitle: '企业 AI 安全领域',
+    domainLayerDesc: '选择企业 AI 风险领域，该领域将治理期望转化为安全控制需求。',
+    capLayerKicker: '03 PANW 能力',
+    capLayerTitle: 'PANW 能力领域',
+    capLayerDesc: '选择 Palo Alto Networks 能力领域，该领域将所需 AI 安全控制落地实施。',
+    utilitiesKicker: '工具',
+    utilitiesTitle: '输出与会话控制',
+    utilitiesDesc: '重置当前分析视图、导出已筛选的映射数据，或将当前视图打印为 PDF。',
+    btnReset: '重置筛选',
+    btnExportCSV: '导出 CSV',
+    btnPrint: '打印 / PDF',
+    heroH1: '企业 AI 安全治理框架',
+    heroPitch: '一个实用的映射工具，将 AI 治理和合规期望转化为企业安全能力及 Palo Alto Networks 解决方案领域，覆盖用户、应用、Agent、浏览器、终端、数据和运行时。',
+    metricRefLabel: '治理/安全参考',
+    metricDomainLabel: '企业 AI 安全领域',
+    metricCapLabel: 'PANW 能力领域',
+    coreMessageTitle: '核心主张',
+    coreMessageP: 'AI 治理不应止步于策略、清单和合规检查表，必须通过可执行的安全控制加以落地。',
+    step1Title: '治理意图',
+    step1Copy: 'NIST AI RMF、ISO/IEC 42001、NIST GenAI Profile、EU AI Act、NIST SP 800-207 零信任架构',
+    step2Title: '企业 AI 安全领域',
+    step2Copy: 'GenAI 访问、数据、应用运行时、模型与Agent制品供应链、Agent、终端、浏览器、监控',
+    step3Title: '安全控制平面',
+    step3Copy: '与真实执行点对齐的 Palo Alto Networks 产品组合',
+    tabMapping: '映射浏览器',
+    tabMap: '关系图谱',
+    tabJourney: '部署路径',
+    mappingTitle: '交互式框架映射',
+    showingAll: '显示全部映射',
+    showingFiltered: '显示 {total} 条中的 {count} 条映射',
+    viewCards: '卡片',
+    viewTable: '表格',
+    emptyState: '无匹配映射，请尝试清除部分筛选条件。',
+    emptyStateTable: '无匹配映射。',
+    colRef: '参考分类',
+    colChallenge: '企业挑战',
+    colCapability: '所需能力',
+    colPANW: 'PANW 能力映射',
+    solutionAreas: '个解决方案领域',
+    tableDomain: '领域',
+    tableRef: '参考分类',
+    tableChallenge: '企业挑战',
+    tableCaps: '所需能力',
+    tablePANW: 'PANW 能力映射',
+    mapTitle: '参考—控制—能力关系图',
+    mapSubtitle: '全宽泳道视图：治理框架、法规或安全架构参考 → 企业 AI 安全领域 → PANW 能力领域。',
+    mapToolbarHint: '点击任意节点可高亮显示相关治理—控制—能力路径并查看详情。',
+    btnClearHighlight: '清除高亮',
+    btnFitMap: '适配视图',
+    btnPresentation: '演示模式',
+    mapHint1: '<strong>1. 治理 / 合规 / 架构参考</strong><br>来自 NIST AI RMF、ISO/IEC 42001、NIST AI 600-1、EU AI Act 及 NIST SP 800-207 零信任架构的治理、合规和安全架构期望。',
+    mapHint2: '<strong>2. 企业 AI 安全领域</strong><br>将治理和合规期望转化为具体控制领域的企业 AI 安全领域，包括访问控制、数据保护、运行时防御、供应链、终端、浏览器、监控和 AI 零信任。',
+    mapHint3: '<strong>3. PANW 能力领域</strong><br>跨 AI 访问、浏览器、终端、Agent、运行时、数据、态势管理和 SOC 层落地 AI 治理的 PANW 能力领域。Prisma SASE 作为底层零信任交付架构，不作为独立能力节点。',
+    journeyTitle: '推荐采用路径',
+    stage1No: '阶段 1', stage1Title: '可见性',
+    stage1Copy: '发现 AI 应用、影子 AI、Agent、工具、浏览器工作流、终端 AI 制品和数据流。',
+    stage2No: '阶段 2', stage2Title: '评估',
+    stage2Copy: '分类 AI 用例、评估风险、测试模型和Agent、验证身份并评估数据暴露。',
+    stage3No: '阶段 3', stage3Title: '执行',
+    stage3Copy: '应用零信任访问、数据保护、运行时控制、浏览器防护和终端策略。',
+    stage4No: '阶段 4', stage4Title: '响应',
+    stage4Copy: '监控漂移、检测滥用、关联事件、自动响应、保留审计证据并持续改进。',
+    sourcesTitle: '原型内嵌参考来源',
+    drawerLabel: '已选路径',
+    drawerDefaultTitle: '关系详情',
+    drawerClose: '关闭',
+    drawerDefault: '在关系图中选择节点，查看映射的参考、企业 AI 安全领域和 PANW 能力领域。',
+    drawerRelated: '关联映射数：{count}。此视图显示从治理或架构参考到企业 AI 安全领域再到 PANW 能力领域的完整路径。',
+    drawerNoRelation: '未找到映射关系。',
+    svgColLeft: '治理 / 合规 / 架构',
+    svgColMid: '企业 AI 安全领域',
+    svgColRight: 'PANW 能力领域',
+    footnote: '此原型面向高管研讨会、AI 安全评估和产品价值映射讨论。版本 22 将顶部指标和关系图术语与三层模型对齐：参考层 → 企业 AI 安全领域 → PANW 能力领域。零信任遵循 NIST SP 800-207 安全架构参考处理；Prisma SASE 作为底层零信任/SASE 交付架构而非独立 PANW 能力节点；关系图由与映射浏览器相同的数据源生成。在将其用于面向客户材料前，请验证产品可用性和包装方式。',
+    mobileMapHint: '关系图适合在桌面端查看。请横屏或在更大屏幕上打开此页面以获得最佳体验。',
+    csvHeader: '领域,参考分类,参考标准,企业挑战,所需能力,PANW 产品,价值',
+    domainLabels: {
+      'Governance Operating Model': '治理运营模型',
+      'GenAI Access & Shadow AI Control': 'GenAI 访问与影子 AI 管控',
+      'AI Data Protection': 'AI 数据保护',
+      'AI Application & Runtime Risk': 'AI 应用与运行时风险',
+      'AI Model & Agent Artifact Supply Chain Risk': 'AI 模型与Agent工件供应链风险',
+      'AI Assurance & Red Teaming': 'AI 保障与红队测试',
+      'Agentic Endpoint Risk': 'Agent终端风险',
+      'Agentic Browser Risk': 'Agent浏览器风险',
+      'Third-Party AI Supply Chain Risk': '第三方 AI 供应链风险',
+      'AI Monitoring & Response': 'AI 监控与响应',
+      'Regulated / High-Risk AI': '受监管/高风险 AI',
+      'Zero Trust for AI': 'AI 零信任',
+    },
+  },
+  'zh-TW': {
+    brandTitle: 'AI 治理映射工具',
+    brandSub: '治理 → 控制 → PANW 產品組合',
+    searchLabel: '搜尋',
+    searchPlaceholder: '搜尋風險、能力、PANW 領域...',
+    refLayerKicker: '01 參考層',
+    refLayerTitle: '治理、合規與安全架構參考',
+    refLayerDesc: '選擇外部治理、合規或安全架構參考，該參考定義了控制要求或控制意圖。',
+    domainLayerKicker: '02 風險領域',
+    domainLayerTitle: '企業 AI 安全領域',
+    domainLayerDesc: '選擇企業 AI 風險領域，將治理期望轉化為安全控制需求。',
+    capLayerKicker: '03 PANW 能力',
+    capLayerTitle: 'PANW 能力領域',
+    capLayerDesc: '選擇 Palo Alto Networks 能力領域，落地所需 AI 安全控制。',
+    utilitiesKicker: '工具',
+    utilitiesTitle: '輸出與工作階段控制',
+    utilitiesDesc: '重置目前分析檢視、匯出已篩選的映射資料，或將目前工具視圖列印為 PDF。',
+    btnReset: '重置篩選',
+    btnExportCSV: '匯出 CSV',
+    btnPrint: '列印 / PDF',
+    heroH1: '企業 AI 安全治理框架',
+    heroPitch: '一個實用的映射工具，將 AI 治理和合規期望轉化為企業安全能力及 Palo Alto Networks 解決方案領域，涵蓋使用者、應用程式、代理人、瀏覽器、終端、資料和執行時期。',
+    metricRefLabel: '治理/安全參考',
+    metricDomainLabel: '企業 AI 安全領域',
+    metricCapLabel: 'PANW 能力領域',
+    coreMessageTitle: '核心主張',
+    coreMessageP: 'AI 治理不應止步於政策、清單和合規檢查表，必須透過可執行的安全控制加以落地。',
+    step1Title: '治理意圖',
+    step1Copy: 'NIST AI RMF、ISO/IEC 42001、NIST GenAI Profile、EU AI Act、NIST SP 800-207 零信任架構',
+    step2Title: '企業 AI 安全領域',
+    step2Copy: 'GenAI 存取、資料、應用程式執行時期、模型與代理人成品供應鏈、代理人、終端、瀏覽器、監控',
+    step3Title: '安全控制平面',
+    step3Copy: '與真實執行點對齊的 Palo Alto Networks 產品組合',
+    tabMapping: '映射瀏覽器',
+    tabMap: '關係圖譜',
+    tabJourney: '部署路徑',
+    mappingTitle: '互動式框架映射',
+    showingAll: '顯示全部映射',
+    showingFiltered: '顯示 {total} 條中的 {count} 條映射',
+    viewCards: '卡片',
+    viewTable: '表格',
+    emptyState: '無符合的映射，請嘗試清除部分篩選條件。',
+    emptyStateTable: '無符合的映射。',
+    colRef: '參考分類',
+    colChallenge: '企業挑戰',
+    colCapability: '所需能力',
+    colPANW: 'PANW 能力映射',
+    solutionAreas: '個解決方案領域',
+    tableDomain: '領域',
+    tableRef: '參考分類',
+    tableChallenge: '企業挑戰',
+    tableCaps: '所需能力',
+    tablePANW: 'PANW 能力映射',
+    mapTitle: '參考—控制—能力關係圖',
+    mapSubtitle: '全寬泳道視圖：治理框架、法規或安全架構參考 → 企業 AI 安全領域 → PANW 能力領域。',
+    mapToolbarHint: '點擊任意節點可高亮顯示相關治理—控制—能力路徑並查看詳情。',
+    btnClearHighlight: '清除高亮',
+    btnFitMap: '適配視圖',
+    btnPresentation: '簡報模式',
+    mapHint1: '<strong>1. 治理 / 合規 / 架構參考</strong><br>來自 NIST AI RMF、ISO/IEC 42001、NIST AI 600-1、EU AI Act 及 NIST SP 800-207 零信任架構的治理、合規和安全架構期望。',
+    mapHint2: '<strong>2. 企業 AI 安全領域</strong><br>將治理和合規期望轉化為具體控制領域的企業 AI 安全領域，包括存取控制、資料保護、執行時期防禦、供應鏈、終端、瀏覽器、監控和 AI 零信任。',
+    mapHint3: '<strong>3. PANW 能力領域</strong><br>跨 AI 存取、瀏覽器、終端、代理人、執行時期、資料、態勢管理和 SOC 層落地 AI 治理的 PANW 能力領域。Prisma SASE 作為底層零信任交付架構，不作為獨立能力節點。',
+    journeyTitle: '建議採用路徑',
+    stage1No: '階段 1', stage1Title: '可見性',
+    stage1Copy: '探索 AI 應用程式、影子 AI、代理人、工具、瀏覽器工作流程、終端 AI 成品和資料流。',
+    stage2No: '階段 2', stage2Title: '評估',
+    stage2Copy: '分類 AI 使用案例、評估風險、測試模型和代理人、驗證身分並評估資料暴露。',
+    stage3No: '階段 3', stage3Title: '執行',
+    stage3Copy: '套用零信任存取、資料保護、執行時期控制、瀏覽器防護和終端政策。',
+    stage4No: '階段 4', stage4Title: '回應',
+    stage4Copy: '監控偏移、偵測濫用、關聯事件、自動回應、保留稽核證據並持續改進。',
+    sourcesTitle: '原型內嵌參考來源',
+    drawerLabel: '已選路徑',
+    drawerDefaultTitle: '關係詳情',
+    drawerClose: '關閉',
+    drawerDefault: '在關係圖中選擇節點，查看映射的參考、企業 AI 安全領域和 PANW 能力領域。',
+    drawerRelated: '關聯映射數：{count}。此視圖顯示從治理或架構參考到企業 AI 安全領域再到 PANW 能力領域的完整路徑。',
+    drawerNoRelation: '未找到映射關係。',
+    svgColLeft: '治理 / 合規 / 架構',
+    svgColMid: '企業 AI 安全領域',
+    svgColRight: 'PANW 能力領域',
+    footnote: '此原型面向高管研討會、AI 安全評估和產品價值映射討論。版本 22 將頂部指標和關係圖術語與三層模型對齊：參考層 → 企業 AI 安全領域 → PANW 能力領域。零信任遵循 NIST SP 800-207 安全架構參考處理；Prisma SASE 作為底層零信任/SASE 交付架構而非獨立 PANW 能力節點；關係圖由與映射瀏覽器相同的資料來源產生。在將其用於面向客戶材料前，請驗證產品可用性和套件方式。',
+    mobileMapHint: '關係圖適合在桌面端查看。請橫屏或在更大螢幕上開啟此頁面以獲得最佳體驗。',
+    csvHeader: '領域,參考分類,參考標準,企業挑戰,所需能力,PANW 產品,價值',
+    domainLabels: {
+      'Governance Operating Model': '治理運營模型',
+      'GenAI Access & Shadow AI Control': 'GenAI 存取與影子 AI 管控',
+      'AI Data Protection': 'AI 資料保護',
+      'AI Application & Runtime Risk': 'AI 應用與執行時風險',
+      'AI Model & Agent Artifact Supply Chain Risk': 'AI 模型與代理工件供應鏈風險',
+      'AI Assurance & Red Teaming': 'AI 保障與紅隊測試',
+      'Agentic Endpoint Risk': '代理終端風險',
+      'Agentic Browser Risk': '代理瀏覽器風險',
+      'Third-Party AI Supply Chain Risk': '第三方 AI 供應鏈風險',
+      'AI Monitoring & Response': 'AI 監控與回應',
+      'Regulated / High-Risk AI': '受監管/高風險 AI',
+      'Zero Trust for AI': 'AI 零信任',
+    },
+  },
+  ja: {
+    brandTitle: 'AI ガバナンス マッパー',
+    brandSub: 'ガバナンス → コントロール → PANW ポートフォリオ',
+    searchLabel: '検索',
+    searchPlaceholder: 'リスク、機能、PANW領域を検索...',
+    refLayerKicker: '01 参照レイヤー',
+    refLayerTitle: 'ガバナンス・コンプライアンス・セキュリティアーキテクチャ参照',
+    refLayerDesc: 'コントロール要件または意図を定める外部のガバナンス、コンプライアンス、またはセキュリティアーキテクチャ参照を選択してください。',
+    domainLayerKicker: '02 リスクドメイン',
+    domainLayerTitle: 'エンタープライズ AI セキュリティドメイン',
+    domainLayerDesc: 'ガバナンス要件をセキュリティコントロールニーズに変換するエンタープライズ AI リスクドメインを選択してください。',
+    capLayerKicker: '03 PANW 機能',
+    capLayerTitle: 'PANW 機能領域',
+    capLayerDesc: '必要な AI セキュリティコントロールを実装する Palo Alto Networks 機能領域を選択してください。',
+    utilitiesKicker: 'ユーティリティ',
+    utilitiesTitle: '出力・セッション管理',
+    utilitiesDesc: '現在の分析ビューをリセット、フィルタリングされたマッピングデータをエクスポート、または現在のビューをPDFとして印刷します。',
+    btnReset: 'フィルタをリセット',
+    btnExportCSV: 'CSV エクスポート',
+    btnPrint: '印刷 / PDF',
+    heroH1: 'エンタープライズ AI セキュリティガバナンスフレームワーク',
+    heroPitch: 'AI ガバナンスとコンプライアンスの要件を、ユーザー、アプリケーション、エージェント、ブラウザ、エンドポイント、データ、ランタイム全体にわたるエンタープライズセキュリティ機能と Palo Alto Networks ソリューション領域に変換する実用的なマッピングツール。',
+    metricRefLabel: 'ガバナンス/セキュリティ参照',
+    metricDomainLabel: 'エンタープライズ AI セキュリティドメイン',
+    metricCapLabel: 'PANW 機能領域',
+    coreMessageTitle: 'コアメッセージ',
+    coreMessageP: 'AI ガバナンスはポリシー、インベントリ、コンプライアンスチェックリストで止まってはなりません。強制力のあるセキュリティコントロールによって運用化される必要があります。',
+    step1Title: 'ガバナンスの意図',
+    step1Copy: 'NIST AI RMF、ISO/IEC 42001、NIST GenAI Profile、EU AI Act、NIST SP 800-207 ゼロトラストアーキテクチャ',
+    step2Title: 'エンタープライズ AI セキュリティドメイン',
+    step2Copy: 'GenAI アクセス、データ、アプリケーションランタイム、モデルとエージェントのサプライチェーン、エージェント、エンドポイント、ブラウザ、モニタリング',
+    step3Title: 'セキュリティコントロールプレーン',
+    step3Copy: '実際の強制ポイントに対応した Palo Alto Networks ポートフォリオ',
+    tabMapping: 'マッピングエクスプローラー',
+    tabMap: 'リレーションシップマップ',
+    tabJourney: 'デプロイメントジャーニー',
+    mappingTitle: 'インタラクティブフレームワークマッピング',
+    showingAll: 'すべてのマッピングを表示',
+    showingFiltered: '{total} 件中 {count} 件を表示',
+    viewCards: 'カード',
+    viewTable: 'テーブル',
+    emptyState: '一致するマッピングがありません。フィルターを解除してください。',
+    emptyStateTable: '一致するマッピングがありません。',
+    colRef: '参照分類',
+    colChallenge: 'エンタープライズ課題',
+    colCapability: '必要な機能',
+    colPANW: 'PANW 機能マッピング',
+    solutionAreas: 'ソリューション領域',
+    tableDomain: 'ドメイン',
+    tableRef: '参照分類',
+    tableChallenge: 'エンタープライズ課題',
+    tableCaps: '必要な機能',
+    tablePANW: 'PANW 機能マッピング',
+    mapTitle: '参照—コントロール—機能マップ',
+    mapSubtitle: '全幅スイムレーンビュー：ガバナンスフレームワーク・規制・セキュリティアーキテクチャ参照 → エンタープライズ AI セキュリティドメイン → PANW 機能領域。',
+    mapToolbarHint: 'ノードをクリックすると、関連するガバナンス—コントロール—機能パスがハイライトされ、詳細が表示されます。',
+    btnClearHighlight: 'ハイライトをクリア',
+    btnFitMap: 'マップをフィット',
+    btnPresentation: 'プレゼンテーションモード',
+    mapHint1: '<strong>1. ガバナンス / コンプライアンス / アーキテクチャ参照</strong><br>NIST AI RMF、ISO/IEC 42001、NIST AI 600-1、EU AI Act、NIST SP 800-207 ゼロトラストアーキテクチャからのガバナンス、コンプライアンス、セキュリティアーキテクチャの要件。',
+    mapHint2: '<strong>2. エンタープライズ AI セキュリティドメイン</strong><br>ガバナンスとコンプライアンスの要件を、アクセス制御、データ保護、ランタイム防御、サプライチェーン、エンドポイント、ブラウザ、モニタリング、AI ゼロトラストなどの具体的なコントロール領域に変換するエンタープライズ AI セキュリティドメイン。',
+    mapHint3: '<strong>3. PANW 機能領域</strong><br>AI アクセス、ブラウザ、エンドポイント、エージェント、ランタイム、データ、ポスチャ、SOC レイヤー全体で AI ガバナンスを実装する PANW 機能領域。Prisma SASE は基盤となるゼロトラスト配信アーキテクチャとして扱われ、独立した機能ノードとしては扱われません。',
+    journeyTitle: '推奨採用ジャーニー',
+    stage1No: 'ステージ 1', stage1Title: '可視化',
+    stage1Copy: 'AI アプリ、シャドー AI、エージェント、ツール、ブラウザワークフロー、エンドポイント AI アーティファクト、データフローを発見します。',
+    stage2No: 'ステージ 2', stage2Title: '評価',
+    stage2Copy: 'AI ユースケースを分類し、リスクを評価し、モデルとエージェントをテストし、アイデンティティを確認し、データ露出を評価します。',
+    stage3No: 'ステージ 3', stage3Title: '強制',
+    stage3Copy: 'ゼロトラストアクセス、データ保護、ランタイムコントロール、ブラウザのガードレール、エンドポイントポリシーを適用します。',
+    stage4No: 'ステージ 4', stage4Title: '対応',
+    stage4Copy: 'ドリフトを監視し、不正使用を検出し、イベントを相関させ、対応を自動化し、監査証拠を保存し、継続的に改善します。',
+    sourcesTitle: 'プロトタイプに組み込まれた参照ソース',
+    drawerLabel: '選択されたパス',
+    drawerDefaultTitle: 'リレーションシップ詳細',
+    drawerClose: '閉じる',
+    drawerDefault: 'リレーションシップマップのノードを選択して、マッピングされた参照、エンタープライズ AI セキュリティドメイン、PANW 機能領域を表示します。',
+    drawerRelated: '関連マッピング数: {count}。このビューはガバナンスまたはアーキテクチャ参照からエンタープライズ AI セキュリティドメイン、PANW 機能領域への接続パスを示します。',
+    drawerNoRelation: 'マッピングされたリレーションシップが見つかりません。',
+    svgColLeft: 'ガバナンス / コンプライアンス / アーキテクチャ',
+    svgColMid: 'エンタープライズ AI セキュリティドメイン',
+    svgColRight: 'PANW 機能領域',
+    footnote: 'このプロトタイプは、エグゼクティブワークショップ、AI セキュリティ評価、製品価値マッピングの議論向けに設計されています。バージョン 22 では、上部メトリクスとリレーションシップマップの用語を三層モデル（参照レイヤー → エンタープライズ AI セキュリティドメイン → PANW 機能領域）に合わせています。ゼロトラストは NIST SP 800-207 に準拠したセキュリティアーキテクチャ参照として扱われます。Prisma SASE は独立した PANW 機能ノードではなく、基盤となるゼロトラスト/SASE 配信アーキテクチャとして扱われます。リレーションシップマップはマッピングエクスプローラーと同じデータソースから生成されます。顧客向け資料として使用する前に、製品の可用性とパッケージングを確認してください。',
+    mobileMapHint: 'リレーションシップマップはデスクトップでの表示向けに設計されています。横向きにするか、より大きな画面で開いてください。',
+    csvHeader: 'ドメイン,参照分類,参照,エンタープライズ課題,必要な機能,PANW製品,価値',
+    domainLabels: {
+      'Governance Operating Model': 'ガバナンス運用モデル',
+      'GenAI Access & Shadow AI Control': 'GenAI アクセス＆シャドウ AI 管理',
+      'AI Data Protection': 'AI データ保護',
+      'AI Application & Runtime Risk': 'AI アプリ＆ランタイムリスク',
+      'AI Model & Agent Artifact Supply Chain Risk': 'AI モデル＆エージェントサプライチェーンリスク',
+      'AI Assurance & Red Teaming': 'AI 保証＆レッドチーミング',
+      'Agentic Endpoint Risk': 'エージェンティックエンドポイントリスク',
+      'Agentic Browser Risk': 'エージェンティックブラウザリスク',
+      'Third-Party AI Supply Chain Risk': 'サードパーティ AI サプライチェーンリスク',
+      'AI Monitoring & Response': 'AI 監視＆レスポンス',
+      'Regulated / High-Risk AI': '規制対象／高リスク AI',
+      'Zero Trust for AI': 'AI ゼロトラスト',
+    },
+  },
+  ko: {
+    brandTitle: 'AI 거버넌스 매퍼',
+    brandSub: '거버넌스 → 제어 → PANW 포트폴리오',
+    searchLabel: '검색',
+    searchPlaceholder: '위험, 기능, PANW 영역 검색...',
+    refLayerKicker: '01 참조 레이어',
+    refLayerTitle: '거버넌스, 규정 준수 및 보안 아키텍처 참조',
+    refLayerDesc: '제어 요구 사항 또는 제어 의도를 정의하는 외부 거버넌스, 규정 준수 또는 보안 아키텍처 참조를 선택합니다.',
+    domainLayerKicker: '02 위험 도메인',
+    domainLayerTitle: '기업 AI 보안 도메인',
+    domainLayerDesc: '거버넌스 기대치를 보안 제어 요구 사항으로 전환하는 기업 AI 위험 도메인을 선택합니다.',
+    capLayerKicker: '03 PANW 역량',
+    capLayerTitle: 'PANW 역량 영역',
+    capLayerDesc: '필요한 AI 보안 제어를 실행하는 Palo Alto Networks 역량 영역을 선택합니다.',
+    utilitiesKicker: '유틸리티',
+    utilitiesTitle: '출력 및 세션 제어',
+    utilitiesDesc: '현재 분석 보기를 재설정하거나, 필터링된 매핑 데이터를 내보내거나, 현재 도구 보기를 PDF로 인쇄합니다.',
+    btnReset: '필터 초기화',
+    btnExportCSV: 'CSV 내보내기',
+    btnPrint: '인쇄 / PDF',
+    heroH1: '기업 AI 보안 거버넌스 프레임워크',
+    heroPitch: 'AI 거버넌스와 규정 준수 기대치를 사용자, 애플리케이션, 에이전트, 브라우저, 엔드포인트, 데이터, 런타임 전반에 걸친 기업 보안 역량과 Palo Alto Networks 솔루션 영역으로 전환하는 실용적인 매핑 도구.',
+    metricRefLabel: '거버넌스/보안 참조',
+    metricDomainLabel: '기업 AI 보안 도메인',
+    metricCapLabel: 'PANW 역량 영역',
+    coreMessageTitle: '핵심 메시지',
+    coreMessageP: 'AI 거버넌스는 정책, 인벤토리, 규정 준수 체크리스트에서 멈춰서는 안 됩니다. 강제 가능한 보안 제어를 통해 운영화되어야 합니다.',
+    step1Title: '거버넌스 의도',
+    step1Copy: 'NIST AI RMF, ISO/IEC 42001, NIST GenAI Profile, EU AI Act, NIST SP 800-207 제로 트러스트 아키텍처',
+    step2Title: '기업 AI 보안 도메인',
+    step2Copy: 'GenAI 액세스, 데이터, 애플리케이션 런타임, 모델 및 에이전트 아티팩트 공급망, 에이전트, 엔드포인트, 브라우저, 모니터링',
+    step3Title: '보안 제어 플레인',
+    step3Copy: '실제 집행 포인트에 맞춘 Palo Alto Networks 포트폴리오',
+    tabMapping: '매핑 탐색기',
+    tabMap: '관계 맵',
+    tabJourney: '배포 여정',
+    mappingTitle: '대화형 프레임워크 매핑',
+    showingAll: '모든 매핑 표시',
+    showingFiltered: '{total}개 중 {count}개 표시',
+    viewCards: '카드',
+    viewTable: '테이블',
+    emptyState: '일치하는 매핑이 없습니다. 필터를 해제해 보세요.',
+    emptyStateTable: '일치하는 매핑이 없습니다.',
+    colRef: '참조 분류',
+    colChallenge: '기업 과제',
+    colCapability: '필요 역량',
+    colPANW: 'PANW 역량 매핑',
+    solutionAreas: '개 솔루션 영역',
+    tableDomain: '도메인',
+    tableRef: '참조 분류',
+    tableChallenge: '기업 과제',
+    tableCaps: '필요 역량',
+    tablePANW: 'PANW 역량 매핑',
+    mapTitle: '참조—제어—역량 맵',
+    mapSubtitle: '전체 폭 스윔레인 보기: 거버넌스 프레임워크, 규정 또는 보안 아키텍처 참조 → 기업 AI 보안 도메인 → PANW 역량 영역.',
+    mapToolbarHint: '노드를 클릭하면 관련 거버넌스—제어—역량 경로가 강조 표시되고 세부 정보가 열립니다.',
+    btnClearHighlight: '강조 지우기',
+    btnFitMap: '맵 맞춤',
+    btnPresentation: '프레젠테이션 모드',
+    mapHint1: '<strong>1. 거버넌스 / 규정 준수 / 아키텍처 참조</strong><br>NIST AI RMF, ISO/IEC 42001, NIST AI 600-1, EU AI Act, NIST SP 800-207 제로 트러스트 아키텍처의 거버넌스, 규정 준수 및 보안 아키텍처 기대치.',
+    mapHint2: '<strong>2. 기업 AI 보안 도메인</strong><br>거버넌스 및 규정 준수 기대치를 액세스 제어, 데이터 보호, 런타임 방어, 공급망, 엔드포인트, 브라우저, 모니터링, AI 제로 트러스트 등의 구체적인 제어 영역으로 전환하는 기업 AI 보안 도메인.',
+    mapHint3: '<strong>3. PANW 역량 영역</strong><br>AI 액세스, 브라우저, 엔드포인트, 에이전트, 런타임, 데이터, 포스처, SOC 레이어 전반에서 AI 거버넌스를 운영화하는 PANW 역량 영역. Prisma SASE는 독립적인 역량 노드가 아닌 기본 제로 트러스트 전달 아키텍처로 처리됩니다.',
+    journeyTitle: '권장 도입 여정',
+    stage1No: '단계 1', stage1Title: '가시성',
+    stage1Copy: 'AI 앱, 섀도 AI, 에이전트, 도구, 브라우저 워크플로우, 엔드포인트 AI 아티팩트 및 데이터 흐름을 발견합니다.',
+    stage2No: '단계 2', stage2Title: '평가',
+    stage2Copy: 'AI 사용 사례를 분류하고, 위험을 평가하고, 모델과 에이전트를 테스트하고, 신원을 확인하고, 데이터 노출을 평가합니다.',
+    stage3No: '단계 3', stage3Title: '적용',
+    stage3Copy: '제로 트러스트 액세스, 데이터 보호, 런타임 제어, 브라우저 가드레일 및 엔드포인트 정책을 적용합니다.',
+    stage4No: '단계 4', stage4Title: '대응',
+    stage4Copy: '드리프트를 모니터링하고, 오용을 감지하고, 이벤트를 상관시키고, 대응을 자동화하고, 감사 증거를 보존하며 지속적으로 개선합니다.',
+    sourcesTitle: '프로토타입에 포함된 참조 소스',
+    drawerLabel: '선택된 경로',
+    drawerDefaultTitle: '관계 세부 정보',
+    drawerClose: '닫기',
+    drawerDefault: '관계 맵에서 노드를 선택하여 매핑된 참조, 기업 AI 보안 도메인, PANW 역량 영역을 확인합니다.',
+    drawerRelated: '관련 매핑: {count}개. 이 보기는 거버넌스 또는 아키텍처 참조에서 기업 AI 보안 도메인, 그리고 PANW 역량 영역으로 이어지는 연결 경로를 보여줍니다.',
+    drawerNoRelation: '매핑된 관계를 찾을 수 없습니다.',
+    svgColLeft: '거버넌스 / 규정 준수 / 아키텍처',
+    svgColMid: '기업 AI 보안 도메인',
+    svgColRight: 'PANW 역량 영역',
+    footnote: '이 프로토타입은 임원 워크숍, AI 보안 평가, 제품 가치 매핑 토론을 위해 설계되었습니다. 버전 22는 상단 메트릭과 관계 맵 용어를 세 레이어 모델(참조 레이어 → 기업 AI 보안 도메인 → PANW 역량 영역)에 맞게 조정합니다. 제로 트러스트는 NIST SP 800-207 정렬 보안 아키텍처 참조로 처리되며, Prisma SASE는 독립적인 PANW 역량 노드가 아닌 기본 제로 트러스트/SASE 전달 아키텍처로 처리됩니다. 관계 맵은 매핑 탐색기와 동일한 매핑 데이터 소스에서 생성됩니다. 고객 대상 자료로 사용하기 전에 제품 가용성과 패키징을 확인하세요.',
+    mobileMapHint: '관계 맵은 데스크톱 화면에 최적화되어 있습니다. 기기를 가로 방향으로 돌리거나 더 큰 화면에서 열어보세요.',
+    csvHeader: '도메인,참조 분류,참조,기업 과제,필요 역량,PANW 제품,가치',
+    domainLabels: {
+      'Governance Operating Model': '거버넌스 운영 모델',
+      'GenAI Access & Shadow AI Control': 'GenAI 접근 및 섀도우 AI 통제',
+      'AI Data Protection': 'AI 데이터 보호',
+      'AI Application & Runtime Risk': 'AI 애플리케이션 및 런타임 위험',
+      'AI Model & Agent Artifact Supply Chain Risk': 'AI 모델 및 에이전트 공급망 위험',
+      'AI Assurance & Red Teaming': 'AI 보증 및 레드팀',
+      'Agentic Endpoint Risk': '에이전트 엔드포인트 위험',
+      'Agentic Browser Risk': '에이전트 브라우저 위험',
+      'Third-Party AI Supply Chain Risk': '서드파티 AI 공급망 위험',
+      'AI Monitoring & Response': 'AI 모니터링 및 대응',
+      'Regulated / High-Risk AI': '규제 대상 / 고위험 AI',
+      'Zero Trust for AI': 'AI 제로 트러스트',
+    },
+  },
+};
+const CONTENT_TRANS = {
+  'govern-operating-model': {
+    'zh-CN': { category: '治理、问责制、政策与可审计性', challenge: 'AI 采用正在跨业务部门扩展，却缺乏一致的所有权认定、可接受使用政策、审批流程、风险分类或审计证据。', capability: ['AI 治理运营模型', 'AI 可接受使用政策', 'AI 资产清单与所有权', '风险分类与审批流程', '审计证据与例外管理', '治理到 SOC 的升级与响应流程'], value: '通过安全团队可落地的资产清单、政策、审批、例外、审计证据和 SOC 响应流程，建立负责任的 AI 治理体系。' },
+    'zh-TW': { category: '治理、問責制、政策與可審計性', challenge: 'AI 採用正在跨業務部門擴展，卻缺乏一致的所有權認定、可接受使用政策、審批流程、風險分類或審計證據。', capability: ['AI 治理運營模型', 'AI 可接受使用政策', 'AI 資產清單與所有權', '風險分類與審批流程', '審計證據與例外管理', '治理到 SOC 的升級與回應流程'], value: '透過安全團隊可落地的資產清單、政策、審批、例外、審計證據和 SOC 回應流程，建立負責任的 AI 治理體系。' },
+    ja: { category: 'ガバナンス、説明責任、ポリシー、監査可能性', challenge: 'AIの採用がビジネスユニット全体に拡大しているが、一貫した所有者の定義、利用規定、承認ワークフロー、リスク分類、または監査証拠が存在しない。', capability: ['AI ガバナンス運用モデル', 'AI 利用規定', 'AI インベントリと所有権', 'リスク分類と承認ワークフロー', '監査証拠と例外管理', 'ガバナンスから SOC へのエスカレーションと対応ワークフロー'], value: 'セキュリティチームが実行できるインベントリ、ポリシー、承認、例外、監査証拠、SOC 対応ワークフローを備えた説明責任のある AI ガバナンスを確立する。' },
+    ko: { category: '거버넌스, 책임, 정책 및 감사 가능성', challenge: 'AI 도입이 사업 부서 전반에 확산되고 있으나, 일관된 책임자 지정, 허용 가능 사용 정책, 승인 워크플로우, 위험 분류 또는 감사 증거가 없는 상태다.', capability: ['AI 거버넌스 운영 모델', 'AI 허용 사용 정책', 'AI 인벤토리 및 소유권', '위험 분류 및 승인 워크플로우', '감사 증거 및 예외 관리', '거버넌스-SOC 에스컬레이션 및 대응 워크플로우'], value: '보안팀이 실행할 수 있는 인벤토리, 정책, 승인, 예외, 감사 증거 및 SOC 대응 워크플로우를 갖춘 책임감 있는 AI 거버넌스를 구축한다.' },
+  },
+  'genai-access-shadow-ai': {
+    'zh-CN': { category: 'GenAI 应用访问治理、影子 AI 发现、数据保护与合规可视性', challenge: '员工通过 Web 访问已批准和未批准的 GenAI 应用，造成影子 AI、不受控的数据共享、不一致的访问策略、治理证据不足以及受监管 AI 使用的合规风险。', capability: ['发现已批准和影子 GenAI 应用', '生成 AI 应用风险评分和使用分析', '应用细粒度的允许、阻止、指导和监控策略', '检查提示和响应中的敏感数据', '通过 AI 访问安全和浏览器路径强制执行策略'], value: '通过 AI 访问安全、DLP 和浏览器控制，使 GenAI 访问可见、风险感知、数据感知，并在使用点可执行，从而将零信任与 AI 治理相连接。' },
+    'zh-TW': { category: 'GenAI 應用存取治理、影子 AI 發現、資料保護與合規可見性', challenge: '員工透過網頁存取已批准和未批准的 GenAI 應用，造成影子 AI、不受控的資料共享、不一致的存取政策、治理證據不足以及受監管 AI 使用的合規風險。', capability: ['發現已批准和影子 GenAI 應用', '生成 AI 應用風險評分和使用分析', '應用細粒度的允許、阻止、指導和監控策略', '檢查提示和回應中的敏感資料', '透過 AI 存取安全和瀏覽器路徑強制執行策略'], value: '透過 AI 存取安全、DLP 和瀏覽器控制，使 GenAI 存取可見、風險感知、資料感知，並在使用點可執行，從而將零信任與 AI 治理相連結。' },
+    ja: { category: 'GenAI アプリケーションアクセスガバナンス、シャドウ AI 検出、データ保護、コンプライアンス可視性', challenge: '従業員がウェブ経由で承認済み・未承認の GenAI アプリにアクセスし、シャドウ AI、制御されないデータ共有、一貫性のないアクセスポリシー、限られたガバナンス証拠、および規制対象 AI 利用のコンプライアンスリスクが生じている。', capability: ['承認済みおよびシャドウ GenAI アプリの検出', 'AI アプリのリスクスコアと利用分析の生成', 'きめ細かな許可・ブロック・コーチ・監視コントロールの適用', 'プロンプトとレスポンスの機密データ検査', 'AI アクセスセキュリティとブラウザアクセスパス経由のポリシー適用'], value: 'AI アクセスセキュリティ、DLP、ブラウザコントロールを通じて GenAI アクセスを可視化・リスク認識・データ認識・利用時点で適用可能にすることで、ゼロトラストと AI ガバナンスを接続する。' },
+    ko: { category: 'GenAI 애플리케이션 접근 거버넌스, 섀도우 AI 탐지, 데이터 보호 및 규정 준수 가시성', challenge: '직원들이 웹을 통해 승인된 GenAI 앱과 미승인 앱에 접근하여 섀도우 AI, 통제되지 않는 데이터 공유, 일관성 없는 접근 정책, 제한적인 거버넌스 증거 및 규제 대상 AI 사용에 대한 컴플라이언스 노출을 야기한다.', capability: ['승인된 GenAI 앱 및 섀도우 앱 탐지', 'AI 앱 위험 점수 및 사용 현황 분석 생성', '세밀한 허용·차단·코칭·모니터링 컨트롤 적용', '프롬프트 및 응답의 민감 데이터 검사', 'AI 접근 보안 및 브라우저 경로를 통한 정책 적용'], value: 'AI 접근 보안, DLP, 브라우저 컨트롤을 통해 GenAI 접근을 가시화·위험 인식·데이터 인식·사용 시점 집행 가능하게 만들어 제로 트러스트와 AI 거버넌스를 연결한다.' },
+  },
+  'data-governance': {
+    'zh-CN': { category: '数据治理、隐私保护与 AI 数据流控制', challenge: '敏感数据、受监管信息、源代码、凭据和知识产权可能被提交给外部 AI 服务或通过 AI 输出泄露。', capability: ['AI 提示和响应的企业 DLP', '数据分类与内容检测', '上下文感知的 AI 数据策略', 'RAG 与知识库访问控制', 'AI 数据暴露态势可视性与修复跟踪', '数据暴露监控与响应'], value: '保护员工 GenAI 使用、浏览器会话、AI 应用运行时和 AI 态势暴露路径中的敏感数据。' },
+    'zh-TW': { category: '資料治理、隱私保護與 AI 資料流控制', challenge: '敏感資料、受監管資訊、原始碼、憑證和智慧財產可能被提交給外部 AI 服務或透過 AI 輸出洩露。', capability: ['AI 提示和回應的企業 DLP', '資料分類與內容檢測', '上下文感知的 AI 資料策略', 'RAG 與知識庫存取控制', 'AI 資料暴露態勢可見性與修復追蹤', '資料暴露監控與回應'], value: '保護員工 GenAI 使用、瀏覽器工作階段、AI 應用執行時間和 AI 態勢暴露路徑中的敏感資料。' },
+    ja: { category: 'データガバナンス、プライバシー、AI データフロー制御', challenge: '機密データ、規制対象情報、ソースコード、認証情報、および知的財産が外部 AI サービスに送信されたり、AI 出力を通じて漏洩する可能性がある。', capability: ['AI プロンプトとレスポンスに対するエンタープライズ DLP', 'データ分類とコンテンツ検査', 'コンテキスト対応 AI データポリシー', 'RAG とナレッジベースのアクセス制御', 'AI データ露出ポスチャーの可視性と修復追跡', 'データ露出の監視と対応'], value: '従業員の GenAI 利用、ブラウザセッション、AI アプリケーションランタイム、AI ポスチャー露出パスにわたって機密データを保護する。' },
+    ko: { category: '데이터 거버넌스, 개인정보 보호 및 AI 데이터 흐름 통제', challenge: '민감 데이터, 규제 대상 정보, 소스 코드, 자격 증명 및 지식 재산이 외부 AI 서비스에 제출되거나 AI 출력을 통해 노출될 수 있다.', capability: ['AI 프롬프트 및 응답을 위한 엔터프라이즈 DLP', '데이터 분류 및 콘텐츠 검사', '컨텍스트 인식 AI 데이터 정책', 'RAG 및 지식 베이스 접근 제어', 'AI 데이터 노출 태세 가시성 및 해결 추적', '데이터 노출 모니터링 및 대응'], value: '직원의 GenAI 사용, 브라우저 세션, AI 애플리케이션 런타임 및 AI 태세 노출 경로 전반에 걸쳐 민감 데이터를 보호한다.' },
+  },
+  'ai-app-runtime': {
+    'zh-CN': { category: 'AI 应用安全与运行时治理', challenge: '企业 AI 应用、副驾驶、聊天机器人、RAG 系统和Agent应用工作流面临提示注入、恶意输入、不安全输出、数据泄露、工具调用滥用和策略绕过等风险。', capability: ['AI 运行时防火墙', '提示与响应检测', '越狱与提示注入防御', 'RAG 数据访问保护', 'Agent与工具调用护栏', '运行时日志与治理'], value: '将 AI 治理从设计时审查推进到 AI 应用和Agent执行路径的实时运行保护。' },
+    'zh-TW': { category: 'AI 應用安全與執行時治理', challenge: '企業 AI 應用、副駕駛、聊天機器人、RAG 系統和代理應用工作流面臨提示注入、惡意輸入、不安全輸出、資料外洩、工具呼叫濫用和策略繞過等風險。', capability: ['AI 執行時防火牆', '提示與回應檢測', '越獄與提示注入防禦', 'RAG 資料存取保護', '代理與工具呼叫護欄', '執行時日誌與治理'], value: '將 AI 治理從設計時審查推進到 AI 應用和代理執行路徑的即時執行保護。' },
+    ja: { category: 'AI アプリケーションセキュリティとランタイムガバナンス', challenge: 'エンタープライズ AI アプリケーション、コパイロット、チャットボット、RAG システム、エージェントアプリケーションワークフローは、プロンプトインジェクション、悪意のある入力、安全でない出力、データ持出し、ツールコール悪用、ポリシー回避のリスクに直面している。', capability: ['AI ランタイムファイアウォール', 'プロンプトとレスポンスの検査', 'ジェイルブレイクとプロンプトインジェクション防御', 'RAG データアクセス保護', 'エージェントとツールコールのガードレール', 'ランタイムロギングとガバナンス'], value: 'AI ガバナンスを設計時レビューから、AI アプリケーションとエージェント実行パスのライブランタイム保護へと移行する。' },
+    ko: { category: 'AI 애플리케이션 보안 및 런타임 거버넌스', challenge: '기업 AI 애플리케이션, 코파일럿, 챗봇, RAG 시스템, 에이전트 애플리케이션 워크플로우는 프롬프트 인젝션, 악의적 입력, 안전하지 않은 출력, 데이터 유출, 도구 호출 남용, 정책 우회 위험에 노출되어 있다.', capability: ['AI 런타임 방화벽', '프롬프트 및 응답 검사', '탈옥 및 프롬프트 인젝션 방어', 'RAG 데이터 접근 보호', '에이전트 및 도구 호출 가드레일', '런타임 로깅 및 거버넌스'], value: 'AI 거버넌스를 설계 시점 검토에서 AI 애플리케이션 및 에이전트 실행 경로의 실시간 런타임 보호로 전환한다.' },
+  },
+  'model-agent-artifact-risk': {
+    'zh-CN': { category: '模型保障与Agent工件供应链安全', challenge: '组织采用第三方模型、专有模型、Agent代码、MCP 服务器、插件和技能，却未对嵌入威胁、来源、权限、漏洞和间接注入路径进行充分验证。', capability: ['模型扫描与评估', 'Agent工件扫描', '模型与Agent供应链验证', '不安全权限与漏洞检测', 'AI 模型与Agent工件态势可视性', '模型、Agent、工具和 MCP 服务器的部署前保障'], value: '将模型安全延伸至Agent供应链，在模型、Agent、工具或 MCP 服务器进入生产环境或终端之前，结合工件扫描与 Cortex Cloud AI-SPM 态势可视性。' },
+    'zh-TW': { category: '模型保障與代理工件供應鏈安全', challenge: '組織採用第三方模型、專有模型、代理程式碼、MCP 伺服器、外掛程式和技能，卻未對嵌入威脅、來源、權限、漏洞和間接注入路徑進行充分驗證。', capability: ['模型掃描與評估', '代理工件掃描', '模型與代理供應鏈驗證', '不安全權限與漏洞檢測', 'AI 模型與代理工件態勢可見性', '模型、代理、工具和 MCP 伺服器的部署前保障'], value: '將模型安全延伸至代理供應鏈，在模型、代理、工具或 MCP 伺服器進入生產環境或終端之前，結合工件掃描與 Cortex Cloud AI-SPM 態勢可見性。' },
+    ja: { category: 'モデル保証とエージェントアーティファクトのサプライチェーンセキュリティ', challenge: '組織はサードパーティモデル、独自モデル、エージェントコード、MCP サーバー、プラグイン、スキルを、埋め込まれた脅威、出所、権限、脆弱性、間接インジェクションパスの十分な検証なしに採用している。', capability: ['モデルスキャンと評価', 'エージェントアーティファクトスキャン', 'モデルとエージェントのサプライチェーン検証', '安全でない権限と脆弱性の検出', 'AI モデルとエージェントアーティファクトのポスチャー可視性', 'モデル、エージェント、ツール、MCP サーバーの展開前保証'], value: 'モデル、エージェント、ツール、MCP サーバーが本番環境やエンドポイントに入る前に、アーティファクトスキャンと Cortex Cloud AI-SPM ポスチャー可視性を組み合わせて、モデルセキュリティをエージェントサプライチェーンまで拡張する。' },
+    ko: { category: '모델 보증 및 에이전트 아티팩트 공급망 보안', challenge: '조직들이 서드파티 모델, 독점 모델, 에이전트 코드, MCP 서버, 플러그인 및 스킬을 내재된 위협, 출처, 권한, 취약점, 간접 인젝션 경로에 대한 충분한 검증 없이 도입하고 있다.', capability: ['모델 스캔 및 평가', '에이전트 아티팩트 스캔', '모델 및 에이전트 공급망 검증', '안전하지 않은 권한 및 취약점 탐지', 'AI 모델 및 에이전트 아티팩트 태세 가시성', '모델, 에이전트, 도구, MCP 서버의 배포 전 보증'], value: '모델, 에이전트, 도구 또는 MCP 서버가 프로덕션 또는 엔드포인트에 투입되기 전에 아티팩트 스캔과 Cortex Cloud AI-SPM 태세 가시성을 결합하여 모델 보안을 에이전트 공급망까지 확장한다.' },
+  },
+  'ai-red-teaming': {
+    'zh-CN': { category: 'AI 系统测试、验证与保障', challenge: 'AI 系统可以通过标准功能测试，却仍然容易受到对抗性提示、不安全行为、数据泄露和Agent滥用场景的攻击。', capability: ['自动化 AI 红队测试', 'Agent攻击模拟', '安全性、安保与合规测试', '风险发现映射到修复', '部署前与持续保障'], value: '提供 AI 应用、模型和Agent已针对现实 AI 特定威胁进行测试的可辩护证据。发现结果可输入下游态势管理和修复流程，但红队测试执行仍是独立能力。' },
+    'zh-TW': { category: 'AI 系統測試、驗證與保障', challenge: 'AI 系統可以通過標準功能測試，卻仍然容易受到對抗性提示、不安全行為、資料洩露和代理濫用情境的攻擊。', capability: ['自動化 AI 紅隊測試', '代理攻擊模擬', '安全性、安保與合規測試', '風險發現映射到修復', '部署前與持續保障'], value: '提供 AI 應用、模型和代理已針對現實 AI 特定威脅進行測試的可辯護證據。發現結果可輸入下游態勢管理和修復流程，但紅隊測試執行仍是獨立能力。' },
+    ja: { category: 'AI システムテスト、検証、保証', challenge: 'AI システムは標準的な機能テストに合格しながら、敵対的プロンプト、安全でない動作、データ漏洩、エージェンティック悪用シナリオに対して脆弱なままである可能性がある。', capability: ['自動化 AI レッドチーミング', 'エージェンティック攻撃シミュレーション', '安全性、セキュリティ、コンプライアンステスト', 'リスク発見から修復へのマッピング', '展開前と継続的保証'], value: 'AI アプリケーション、モデル、エージェントが現実的な AI 固有の脅威に対してテストされたことを示す擁護可能な証拠を提供する。発見事項はダウンストリームのポスチャー管理と修復ワークフローに供給できるが、レッドチーミング実行は独立した能力として残る。' },
+    ko: { category: 'AI 시스템 테스트, 검증 및 보증', challenge: 'AI 시스템이 표준 기능 테스트는 통과하면서도 적대적 프롬프트, 안전하지 않은 동작, 데이터 유출, 에이전트 남용 시나리오에 취약한 상태로 남아 있을 수 있다.', capability: ['자동화 AI 레드팀', '에이전트 공격 시뮬레이션', '안전성, 보안 및 규정 준수 테스트', '위험 발견 사항을 해결 조치에 매핑', '배포 전 및 지속적 보증'], value: 'AI 애플리케이션, 모델, 에이전트가 현실적인 AI 특화 위협에 대해 테스트되었음을 입증하는 방어 가능한 증거를 제공한다. 발견 사항은 다운스트림 태세 관리 및 해결 워크플로우에 활용될 수 있으나, 레드팀 실행은 독립적인 역량으로 남는다.' },
+  },
+  'agentic-endpoint': {
+    'zh-CN': { category: '终端原生 AI Agent、编码Agent和非二进制 AI 组件', challenge: '开发者系统和用户终端越来越多地在传统终端可视范围之外运行编码Agent、本地Agent、插件、技能、MCP 服务器和其他 AI 原生组件。', capability: ['终端 AI 工件发现', 'Agent工具清单', '编码Agent可视性', '非二进制组件治理', '终端检测与响应集成'], value: '消除 AI 原生工具和自主终端工作流产生的终端盲点。' },
+    'zh-TW': { category: '終端原生 AI 代理、編碼代理和非二進位 AI 元件', challenge: '開發者系統和用戶終端越來越多地在傳統終端可見範圍之外執行編碼代理、本地代理、外掛程式、技能、MCP 伺服器和其他 AI 原生元件。', capability: ['終端 AI 工件發現', '代理工具清單', '編碼代理可見性', '非二進位元件治理', '終端偵測與回應整合'], value: '消除 AI 原生工具和自主終端工作流程產生的終端盲點。' },
+    ja: { category: 'エンドポイントネイティブ AI エージェント、コーディングエージェント、非バイナリ AI コンポーネント', challenge: '開発者システムとユーザーエンドポイントは、従来のエンドポイント可視性の範囲外で、コーディングエージェント、ローカルエージェント、プラグイン、スキル、MCP サーバー、その他の AI ネイティブコンポーネントを実行するケースが増えている。', capability: ['エンドポイント AI アーティファクト検出', 'エージェンティックツールインベントリ', 'コーディングエージェントの可視性', '非バイナリコンポーネントガバナンス', 'エンドポイント検出と対応の統合'], value: 'AI ネイティブツールと自律エンドポイントワークフローによって生じたエンドポイントのブラインドスポットを解消する。' },
+    ko: { category: '엔드포인트 네이티브 AI 에이전트, 코딩 에이전트 및 비바이너리 AI 컴포넌트', challenge: '개발자 시스템과 사용자 엔드포인트에서 기존 엔드포인트 가시성 범위 밖에서 코딩 에이전트, 로컬 에이전트, 플러그인, 스킬, MCP 서버 및 기타 AI 네이티브 컴포넌트가 점점 더 많이 실행되고 있다.', capability: ['엔드포인트 AI 아티팩트 탐지', '에이전트 도구 인벤토리', '코딩 에이전트 가시성', '비바이너리 컴포넌트 거버넌스', '엔드포인트 탐지 및 대응 통합'], value: 'AI 네이티브 도구 및 자율 엔드포인트 워크플로우로 인해 발생하는 엔드포인트 사각지대를 해소한다.' },
+  },
+  'agentic-browser': {
+    'zh-CN': { category: '安全浏览器与自主 Web 工作流治理', challenge: '基于浏览器的Agent以用户身份在 SaaS 和 Web 应用中操作，带来数据移动、未授权操作、会话滥用和范围漂移等风险。', capability: ['安全 AI 工作空间', '浏览器原生可视性', '自主工作流控制', '浏览器会话中的 DLP', '自带模型工作流的治理'], value: '保护用户、SaaS、数据和 AI Agent日益交汇的场所。' },
+    'zh-TW': { category: '安全瀏覽器與自主網路工作流治理', challenge: '基於瀏覽器的代理以用戶身份在 SaaS 和 Web 應用中操作，帶來資料移動、未授權操作、工作階段濫用和範圍漂移等風險。', capability: ['安全 AI 工作空間', '瀏覽器原生可見性', '自主工作流控制', '瀏覽器工作階段中的 DLP', '自帶模型工作流程的治理'], value: '保護用戶、SaaS、資料和 AI 代理日益交匯的場所。' },
+    ja: { category: 'セキュアブラウザと自律 Web ワークフローガバナンス', challenge: 'ブラウザベースのエージェントがユーザー ID で SaaS および Web アプリケーション全体で動作し、データ移動、不正操作、セッション悪用、スコープドリフトのリスクをもたらす。', capability: ['セキュア AI ワークスペース', 'ブラウザネイティブ可視性', '自律ワークフロー制御', 'ブラウザセッションでの DLP', 'Bring Your Own Model ワークフローのガバナンス'], value: 'ユーザー、SaaS、データ、AI エージェントが交差する場所を保護する。' },
+    ko: { category: '보안 브라우저 및 자율 웹 워크플로우 거버넌스', challenge: '브라우저 기반 에이전트가 사용자 ID로 SaaS 및 웹 애플리케이션 전반에서 작동하여 데이터 이동, 무단 작업, 세션 남용, 범위 이탈 위험을 야기한다.', capability: ['보안 AI 워크스페이스', '브라우저 네이티브 가시성', '자율 워크플로우 통제', '브라우저 세션 내 DLP', '직접 모델 가져오기 워크플로우 거버넌스'], value: '사용자, SaaS, 데이터, AI 에이전트가 점점 더 교차하는 지점을 보호한다.' },
+  },
+  'third-party-supply-chain': {
+    'zh-CN': { category: '第三方 AI、开源 AI、模型与Agent供应链治理', challenge: '企业使用外部模型、API、开源 AI 组件、MCP 服务器、插件和Agent工件，却缺乏一致的供应链控制。', capability: ['第三方 AI 风险评估', '模型与Agent工件扫描', '供应链验证', '供应商治理流程', '持续风险态势监控'], value: '将 AI 治理从内部政策延伸到 AI 原生供应链。' },
+    'zh-TW': { category: '第三方 AI、開源 AI、模型與代理供應鏈治理', challenge: '企業使用外部模型、API、開源 AI 元件、MCP 伺服器、外掛程式和代理工件，卻缺乏一致的供應鏈控制。', capability: ['第三方 AI 風險評估', '模型與代理工件掃描', '供應鏈驗證', '供應商治理流程', '持續風險態勢監控'], value: '將 AI 治理從內部政策延伸到 AI 原生供應鏈。' },
+    ja: { category: 'サードパーティ AI、オープンソース AI、モデルとエージェントのサプライチェーンガバナンス', challenge: '組織は外部モデル、API、オープンソース AI コンポーネント、MCP サーバー、プラグイン、エージェントアーティファクトを、一貫したサプライチェーン管理なしに利用している。', capability: ['サードパーティ AI リスク評価', 'モデルとエージェントアーティファクトスキャン', 'サプライチェーン検証', 'ベンダーガバナンスワークフロー', '継続的リスクポスチャー監視'], value: 'AI ガバナンスを内部ポリシーを超えて、AI ネイティブサプライチェーンまで拡張する。' },
+    ko: { category: '서드파티 AI, 오픈소스 AI, 모델 및 에이전트 공급망 거버넌스', challenge: '기업들이 외부 모델, API, 오픈소스 AI 컴포넌트, MCP 서버, 플러그인 및 에이전트 아티팩트를 일관된 공급망 통제 없이 사용하고 있다.', capability: ['서드파티 AI 위험 평가', '모델 및 에이전트 아티팩트 스캔', '공급망 검증', '벤더 거버넌스 워크플로우', '지속적 위험 태세 모니터링'], value: 'AI 거버넌스를 내부 정책을 넘어 AI 네이티브 공급망까지 확장한다.' },
+  },
+  'monitoring-response': {
+    'zh-CN': { category: '持续监控、事件响应与治理反馈循环', challenge: '如果遥测数据、告警、例外、Agent行为和事件未被关联并反馈到治理决策，AI 管控措施将失去效用。', capability: ['AI 安全遥测数据收集', 'AI 态势漂移与暴露监控', '事件检测与优先级排序', '工作流自动化', '政策反馈循环', '审计与董事会报告证据'], value: '在 AI 治理、Cortex Cloud AI-SPM 态势监控、AI 安全运营和持续改进之间建立闭环。' },
+    'zh-TW': { category: '持續監控、事件回應與治理反饋循環', challenge: '如果遙測資料、告警、例外、代理行為和事件未被關聯並反饋到治理決策，AI 管控措施將失去效用。', capability: ['AI 安全遙測資料收集', 'AI 態勢漂移與暴露監控', '事件偵測與優先級排序', '工作流自動化', '政策反饋循環', '審計與董事會報告證據'], value: '在 AI 治理、Cortex Cloud AI-SPM 態勢監控、AI 安全運營和持續改進之間建立閉環。' },
+    ja: { category: '継続的監視、インシデント対応、ガバナンスフィードバックループ', challenge: 'テレメトリ、アラート、例外、エージェント動作、インシデントが相関分析されてガバナンス決定にフィードバックされない場合、AI コントロールは有効性を失う。', capability: ['AI セキュリティテレメトリ収集', 'AI ポスチャードリフトと露出監視', 'インシデント検出と優先度付け', 'ワークフロー自動化', 'ポリシーフィードバックループ', '監査と取締役会報告のための証拠'], value: 'AI ガバナンス、Cortex Cloud AI-SPM ポスチャー監視、AI セキュリティオペレーション、継続的改善の間にクローズドループを作成する。' },
+    ko: { category: '지속적 모니터링, 인시던트 대응 및 거버넌스 피드백 루프', challenge: '텔레메트리, 경보, 예외, 에이전트 행동, 인시던트가 상관 분석되어 거버넌스 결정에 피드백되지 않으면 AI 통제 수단은 효과를 잃는다.', capability: ['AI 보안 텔레메트리 수집', 'AI 태세 드리프트 및 노출 모니터링', '인시던트 탐지 및 우선순위 지정', '워크플로우 자동화', '정책 피드백 루프', '감사 및 이사회 보고를 위한 증거'], value: 'AI 거버넌스, Cortex Cloud AI-SPM 태세 모니터링, AI 보안 운영, 지속적 개선 간의 폐쇄 루프를 생성한다.' },
+  },
+  'high-risk-ai-compliance': {
+    'zh-CN': { category: '风险分类、透明度、技术控制与合规证据', challenge: '就业、金融、医疗、公共部门、教育、关键运营或其他受监管环境中的高影响 AI 应用场景，需要更强的风险分类、文档记录、监控和管控。', capability: ['用例分类', '控制证据映射', '受监管 AI 系统的测试与保障', '监控与日志记录', '风险处理流程', '安全设计与持续保障'], value: '通过资产清单、证据、测试、运行时控制、日志记录和响应流程支持受监管 AI 和高风险 AI 计划。' },
+    'zh-TW': { category: '風險分類、透明度、技術控制與合規證據', challenge: '就業、金融、醫療、公共部門、教育、關鍵營運或其他受監管環境中的高影響 AI 應用場景，需要更強的風險分類、文件記錄、監控和管控。', capability: ['使用案例分類', '控制證據映射', '受監管 AI 系統的測試與保障', '監控與日誌記錄', '風險處理流程', '安全設計與持續保障'], value: '透過資產清單、證據、測試、執行時控制、日誌記錄和回應流程支援受監管 AI 和高風險 AI 計畫。' },
+    ja: { category: 'リスク分類、透明性、技術的コントロール、コンプライアンス証拠', challenge: '雇用、金融、医療、公共部門、教育、重要業務、その他の規制環境における高影響 AI 利用ケースは、より強力なリスク分類、ドキュメント化、監視、コントロールを必要とする。', capability: ['ユースケース分類', 'コントロール証拠マッピング', '規制対象 AI システムのテストと保証', '監視とロギング', 'リスク対応ワークフロー', 'セキュリティバイデザインと継続的保証'], value: 'インベントリ、証拠、テスト、ランタイムコントロール、ロギング、対応ワークフローで規制対象 AI と高リスク AI プログラムを支援する。' },
+    ko: { category: '위험 분류, 투명성, 기술적 통제 및 규정 준수 증거', challenge: '고용, 금융, 의료, 공공 부문, 교육, 핵심 운영 또는 기타 규제 환경에서의 고영향 AI 사용 사례는 더 강력한 위험 분류, 문서화, 모니터링 및 통제를 필요로 한다.', capability: ['사용 사례 분류', '통제 증거 매핑', '규제 대상 AI 시스템의 테스트 및 보증', '모니터링 및 로깅', '위험 처리 워크플로우', '보안 설계 및 지속적 보증'], value: '인벤토리, 증거, 테스트, 런타임 통제, 로깅, 대응 워크플로우를 통해 규제 대상 AI 및 고위험 AI 프로그램을 지원한다.' },
+  },
+  'zero-trust-for-ai': {
+    'zh-CN': { category: 'AI 的身份验证、上下文感知、最小权限、分段与持续执行', challenge: 'AI 系统和Agent在用户、设备、数据、SaaS、API、模型和工具之间扩展访问路径。静态信任假设已不再足够。', capability: ['身份感知 AI 访问', '设备与会话上下文', '工具和数据的最小权限访问', 'GenAI、AI 应用和Agent流量的Inline执行', '持续验证与响应'], value: '通过上下文感知的执行和响应，将零信任原则应用于 AI 用户、应用、数据、工具、Agent和运行时流量。' },
+    'zh-TW': { category: 'AI 的身份驗證、上下文感知、最小權限、分段與持續執行', challenge: 'AI 系統和代理在用戶、設備、資料、SaaS、API、模型和工具之間擴展存取路徑。靜態信任假設已不再足夠。', capability: ['身份感知 AI 存取', '設備與工作階段上下文', '工具和資料的最小權限存取', 'GenAI、AI 應用和代理流量的Inline執行', '持續驗證與回應'], value: '透過上下文感知的執行和回應，將零信任原則應用於 AI 用戶、應用、資料、工具、代理和執行時流量。' },
+    ja: { category: 'AI のための ID、コンテキスト、最小権限、セグメンテーション、継続的な実施', challenge: 'AI システムとエージェントは、ユーザー、デバイス、データ、SaaS、API、モデル、ツールにわたってアクセスパスを拡大する。静的な信頼前提はもはや十分ではない。', capability: ['ID を考慮した AI アクセス', 'デバイスとセッションコンテキスト', 'ツールとデータへの最小権限アクセス', 'GenAI、AI アプリケーション、エージェントトラフィックのInline適用', '継続的な検証と対応'], value: 'コンテキスト対応の実施と対応を通じて、AI ユーザー、アプリ、データ、ツール、エージェント、ランタイムトラフィックにゼロトラスト原則を適用する。' },
+    ko: { category: 'AI를 위한 ID, 컨텍스트, 최소 권한, 세분화 및 지속적 실행', challenge: 'AI 시스템과 에이전트가 사용자, 기기, 데이터, SaaS, API, 모델, 도구 전반에 걸쳐 접근 경로를 확장한다. 정적 신뢰 가정은 더 이상 충분하지 않다.', capability: ['ID 인식 AI 접근', '기기 및 세션 컨텍스트', '도구 및 데이터의 최소 권한 접근', 'GenAI, AI 애플리케이션, 에이전트 트래픽에 대한 Inline 적용', '지속적 검증 및 대응'], value: '컨텍스트 인식 집행 및 대응을 통해 AI 사용자, 앱, 데이터, 도구, 에이전트, 런타임 트래픽에 제로 트러스트 원칙을 적용한다.' },
+  },
+};
+
+let currentLang = localStorage.getItem('aiGovLang') || 'en';
+function t(key) {
+  return TRANSLATIONS[currentLang]?.[key] ?? TRANSLATIONS.en[key] ?? key;
+}
+function tDomain(name) {
+  return TRANSLATIONS[currentLang]?.domainLabels?.[name] ?? name;
+}
+function tContent(id, field) {
+  if (currentLang === 'en') return null;
+  return CONTENT_TRANS[id]?.[currentLang]?.[field] ?? null;
+}
+function applyTranslations() {
+  document.getElementById('htmlRoot').lang = currentLang === 'zh-CN' ? 'zh-Hans' : currentLang === 'zh-TW' ? 'zh-Hant' : currentLang;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    if (el.dataset.i18nAttr === 'placeholder') {
+      el.placeholder = t(key);
+    } else if (el.dataset.i18nHtml) {
+      el.innerHTML = t(key);
+    } else {
+      el.textContent = t(key);
+    }
+  });
+  // Map hints use innerHTML (they contain <strong> and <br>)
+  ['mapHint1','mapHint2','mapHint3'].forEach(k => {
+    const el = document.getElementById(k);
+    if (el) el.innerHTML = t(k);
+  });
+  // Update lang-switch active button
+  document.querySelectorAll('.lang-switch button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === currentLang);
+  });
+}
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('aiGovLang', lang);
+  applyTranslations();
+  renderFilters();
+  renderGraph();
+  render();
+}
+
+function toggleSection(section) {
+  if (window.innerWidth > 1160) return;
+  section.classList.toggle('collapsed');
+}
+
+function initSectionState() {
+  const isMobile = window.innerWidth <= 1160;
+  document.querySelectorAll('.sidebar-section').forEach(s => {
+    if (isMobile) {
+      s.classList.add('collapsed');
+    } else {
+      s.classList.remove('collapsed');
+    }
+  });
+}
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 1160) {
+    document.querySelectorAll('.sidebar-section').forEach(s => s.classList.remove('collapsed'));
+  }
+});
+
 const mappings = [
   {
     "id": "govern-operating-model",
@@ -1054,7 +1773,7 @@ function renderFilters() {
   const fw = document.getElementById('frameworkFilters');
   fw.innerHTML = frameworkList.map(item => `<button class="chip secondary" data-type="framework" data-value="${item}">${item}</button>`).join('');
   const dm = document.getElementById('domainFilters');
-  dm.innerHTML = domainList.map(item => `<button class="chip" data-type="domain" data-value="${item}">${item}</button>`).join('');
+  dm.innerHTML = domainList.map(item => `<button class="chip" data-type="domain" data-value="${item}">${tDomain(item)}</button>`).join('');
   const pr = document.getElementById('productFilters');
   pr.innerHTML = productList.map(item => `<button class="chip" data-type="product" data-value="${item}">${item}</button>`).join('');
   document.querySelectorAll('.chip[data-type]').forEach(btn => {
@@ -1101,43 +1820,55 @@ function filterMappings() {
 function renderCards(data) {
   const root = document.getElementById('cardsView');
   if (!data.length) {
-    root.innerHTML = `<div class="empty-state">No matching mappings. Try clearing one or more filters.</div>`;
+    root.innerHTML = `<div class="empty-state">${t('emptyState')}</div>`;
     return;
   }
-  root.innerHTML = data.map(m => `
+  root.innerHTML = data.map(m => {
+    const cat = tContent(m.id, 'category') ?? m.category;
+    const chall = tContent(m.id, 'challenge') ?? m.challenge;
+    const caps = tContent(m.id, 'capability') ?? m.capability;
+    const val = tContent(m.id, 'value') ?? m.value;
+    return `
     <article class="mapper-card">
       <div class="mapper-top">
         <div>
-          <h3>${m.domain}</h3>
+          <h3>${tDomain(m.domain)}</h3>
           <div class="badge-row">
             ${m.frameworks.map(f => `<span class="badge ${clsForFramework(f)}">${f}</span>`).join('')}
           </div>
         </div>
-        <span class="badge pan">${m.products.length} solution areas</span>
+        <span class="badge pan">${m.products.length} ${t('solutionAreas')}</span>
       </div>
       <div class="mapper-columns">
-        <div class="column-box"><div class="column-label">Reference Classification</div><strong>${m.category}</strong><ul>${m.frameworks.map(x=>`<li>${x}</li>`).join('')}</ul></div>
-        <div class="column-box"><div class="column-label">Enterprise Challenge</div><strong>${m.challenge}</strong></div>
-        <div class="column-box"><div class="column-label">Required Capability</div><ul>${m.capability.map(x=>`<li>${x}</li>`).join('')}</ul></div>
-        <div class="column-box"><div class="column-label">PANW Capability Mapping</div>${m.products.map(p => `<span class="product-pill" style="border-color:${productColors[p]||'#ff6b6b'}55;background:${productColors[p]||'#ff6b6b'}22">${p}</span>`).join('')}<p class="small">${m.value}</p></div>
+        <div class="column-box"><div class="column-label">${t('colRef')}</div><strong>${cat}</strong><ul>${m.frameworks.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+        <div class="column-box"><div class="column-label">${t('colChallenge')}</div><strong>${chall}</strong></div>
+        <div class="column-box"><div class="column-label">${t('colCapability')}</div><ul>${caps.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+        <div class="column-box"><div class="column-label">${t('colPANW')}</div>${m.products.map(p => `<span class="product-pill" style="border-color:${productColors[p]||'#ff6b6b'}55;background:${productColors[p]||'#ff6b6b'}22">${p}</span>`).join('')}<p class="small">${val}</p></div>
       </div>
-    </article>`).join('');
+    </article>`;
+  }).join('');
 }
 
 function renderTable(data) {
   const root = document.getElementById('tableView');
-  if (!data.length) { root.innerHTML = `<div class="empty-state">No matching mappings.</div>`; return; }
+  if (!data.length) { root.innerHTML = `<div class="empty-state">${t('emptyStateTable')}</div>`; return; }
   root.innerHTML = `
     <table class="matrix-table">
-      <thead><tr><th>Domain</th><th>Reference Classification</th><th>Enterprise Challenge</th><th>Required Capabilities</th><th>PANW Capability Mapping</th></tr></thead>
-      <tbody>${data.map(m => `
+      <thead><tr><th>${t('tableDomain')}</th><th>${t('tableRef')}</th><th>${t('tableChallenge')}</th><th>${t('tableCaps')}</th><th>${t('tablePANW')}</th></tr></thead>
+      <tbody>${data.map(m => {
+        const cat = tContent(m.id, 'category') ?? m.category;
+        const chall = tContent(m.id, 'challenge') ?? m.challenge;
+        const caps = tContent(m.id, 'capability') ?? m.capability;
+        const val = tContent(m.id, 'value') ?? m.value;
+        return `
         <tr>
-          <td><strong>${m.domain}</strong><div class="badge-row">${m.frameworks.map(f => `<span class="badge ${clsForFramework(f)}">${f}</span>`).join('')}</div></td>
-          <td>${m.category}</td>
-          <td>${m.challenge}</td>
-          <td><ul>${m.capability.map(x=>`<li>${x}</li>`).join('')}</ul></td>
-          <td>${m.products.map(p => `<span class="product-pill" style="border-color:${productColors[p]||'#ff6b6b'}55;background:${productColors[p]||'#ff6b6b'}22">${p}</span>`).join('')}<div class="small">${m.value}</div></td>
-        </tr>`).join('')}</tbody>
+          <td><strong>${tDomain(m.domain)}</strong><div class="badge-row">${m.frameworks.map(f => `<span class="badge ${clsForFramework(f)}">${f}</span>`).join('')}</div></td>
+          <td>${cat}</td>
+          <td>${chall}</td>
+          <td><ul>${caps.map(x=>`<li>${x}</li>`).join('')}</ul></td>
+          <td>${m.products.map(p => `<span class="product-pill" style="border-color:${productColors[p]||'#ff6b6b'}55;background:${productColors[p]||'#ff6b6b'}22">${p}</span>`).join('')}<div class="small">${val}</div></td>
+        </tr>`;
+      }).join('')}</tbody>
     </table>`;
 }
 
@@ -1269,7 +2000,8 @@ function renderGraph() {
   const nodeLabel = n => {
     const maxLines = n.type === 'framework' ? 2 : n.type === 'product' ? 4 : 4;
     const wrapChars = isPresentation ? (n.type === 'framework' ? 32 : n.type === 'product' ? 31 : 34) : (n.type === 'product' ? 24 : 26);
-    const lines = wrapLabel(n.id, wrapChars, maxLines);
+    const labelText = n.type === 'domain' ? tDomain(n.id) : n.id;
+    const lines = wrapLabel(labelText, wrapChars, maxLines);
     const c = center(n);
     const startY = c.y - ((lines.length - 1) * 7);
     return lines.map((line, i) => `<text x="${c.x}" y="${startY + i*14}">${line}</text>`).join('');
@@ -1284,9 +2016,9 @@ function renderGraph() {
       <filter id="glow"><feGaussianBlur stdDeviation="2.6" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 Z" fill="rgba(255,255,255,0.38)" /></marker>
     </defs>
-    <text class="graph-label" x="${leftX + leftW / 2}" y="32" text-anchor="middle">Governance / Compliance / Architecture</text>
-    <text class="graph-label" x="${middleX + middleW / 2}" y="32" text-anchor="middle">Enterprise AI Security Domain</text>
-    <text class="graph-label" x="${rightX + rightW / 2}" y="32" text-anchor="middle">PANW Capability Area</text>
+    <text class="graph-label" x="${leftX + leftW / 2}" y="32" text-anchor="middle">${t('svgColLeft')}</text>
+    <text class="graph-label" x="${middleX + middleW / 2}" y="32" text-anchor="middle">${t('svgColMid')}</text>
+    <text class="graph-label" x="${rightX + rightW / 2}" y="32" text-anchor="middle">${t('svgColRight')}</text>
     ${edgeUnique.map(([a,b]) => {
       if(!window.nodeMap[a] || !window.nodeMap[b]) return '';
       return `<path class="edge" data-a="${a}" data-b="${b}" d="${pathFor(a,b)}" fill="none" marker-end="url(#arrow)" />`;
@@ -1401,19 +2133,21 @@ function selectNode(id) {
 function openDrawer(id, matches) {
   document.getElementById('drawerTitle').textContent = id;
   const chains = matches.map(m => {
+    const caps = tContent(m.id, 'capability') ?? m.capability;
+    const val = tContent(m.id, 'value') ?? m.value;
     const products = m.products.map(p => `<span class="product-pill" style="border-color:${productColors[p]||'#ff6b6b'}55;background:${productColors[p]||'#ff6b6b'}22">${p}</span>`).join('');
     return `<div class="chain-card">
       <div class="small">${m.frameworks.join(' + ')}</div>
-      <strong>${m.domain}</strong>
+      <strong>${tDomain(m.domain)}</strong>
       <span class="chain-arrow">→</span>
-      <span>${m.capability.slice(0,2).join('; ')}</span>
+      <span>${caps.slice(0,2).join('; ')}</span>
       <div style="margin-top:8px;">${products}</div>
-      <p class="small" style="margin:8px 0 0;">${m.value}</p>
+      <p class="small" style="margin:8px 0 0;">${val}</p>
     </div>`;
   }).join('');
   document.getElementById('drawerContent').innerHTML = `
-    <p class="small">Related mappings: ${matches.length}. This view shows the connected path from governance or architecture reference to Enterprise AI Security Domain and then to PANW Capability Area.</p>
-    ${chains || '<p class="small">No mapped relationship found.</p>'}
+    <p class="small">${t('drawerRelated').replace('{count}', matches.length)}</p>
+    ${chains || `<p class="small">${t('drawerNoRelation')}</p>`}
   `;
   document.getElementById('drawerOverlay').classList.add('open');
   document.getElementById('detailsDrawer').classList.add('open');
@@ -1510,8 +2244,8 @@ window.addEventListener('resize', () => {
 });
 
 function downloadCSV() {
-  const header = ['Domain','Reference Classification','References','Enterprise Challenge','Required Capabilities','PANW Products','Value'];
-  const rows = filterMappings().map(m => [m.domain, m.category, m.frameworks.join('; '), m.challenge, m.capability.join('; '), m.products.join('; '), m.value]);
+  const header = t('csvHeader').split(',');
+  const rows = filterMappings().map(m => [tDomain(m.domain), tContent(m.id,'category')??m.category, m.frameworks.join('; '), tContent(m.id,'challenge')??m.challenge, (tContent(m.id,'capability')??m.capability).join('; '), m.products.join('; '), tContent(m.id,'value')??m.value]);
   const csv = [header, ...rows].map(row => row.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
@@ -1529,11 +2263,15 @@ function render() {
   document.getElementById('metricReferences').textContent = frameworkList.length;
   document.getElementById('metricDomains').textContent = domainList.length;
   document.getElementById('metricCapabilities').textContent = productList.length;
-  document.getElementById('resultCount').textContent = `Showing ${data.length} of ${mappings.length} mappings`;
+  document.getElementById('resultCount').textContent = (data.length === mappings.length)
+    ? t('showingAll')
+    : t('showingFiltered').replace('{count}', data.length).replace('{total}', mappings.length);
   renderCards(data);
   renderTable(data);
 }
 
+applyTranslations();
+initSectionState();
 document.getElementById('search').addEventListener('input', render);
 renderFilters();
 renderGraph();
