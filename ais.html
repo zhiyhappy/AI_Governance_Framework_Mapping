@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" type="image/png" href="icon.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prisma AIRS Agent Identity + AI Gateway — End-to-End Flow (GA1)</title>
+<style>
+:root{
+  --bg:#0a0e16; --panel:#111826; --panel2:#0d1320; --line:#232d42; --line2:#2f3b55;
+  --text:#e5e9f2; --muted:#8a96ad; --dim:#5b6780; --accent:#fa582d;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"PingFang SC","PingFang TC","Apple SD Gothic Neo","Microsoft YaHei","Microsoft JhengHei","Malgun Gothic",sans-serif}
+body{display:flex;flex-direction:column;min-width:1200px}
+header{display:flex;align-items:center;gap:16px;padding:12px 20px;border-bottom:1px solid var(--line);background:linear-gradient(90deg,#141b2b,#0a0e16)}
+header .logo{width:10px;height:28px;background:var(--accent);border-radius:2px}
+header h1{font-size:17px;margin:0;font-weight:650;letter-spacing:.2px}
+header .sub{color:var(--muted);font-size:12px}
+header .spacer{flex:1}
+.ctrl{display:flex;gap:6px;align-items:center}
+button,select{background:#18212f;color:var(--text);border:1px solid var(--line2);border-radius:7px;padding:6px 11px;font:inherit;font-size:13px;cursor:pointer}
+button:hover,select:hover{border-color:#4a5878;background:#1d2738}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;min-width:84px}
+button.primary:hover{background:#ff6b42}
+.toggle{display:flex;border:1px solid var(--line2);border-radius:7px;overflow:hidden}
+.toggle button{border:0;border-radius:0;background:#141c2a;color:var(--muted)}
+.toggle button.on{background:#2a3550;color:#fff}
+#phases{display:flex;gap:4px;padding:8px 20px;border-bottom:1px solid var(--line);background:var(--panel2);overflow-x:auto}
+.ph{flex:1;min-width:104px;padding:6px 8px;border-radius:7px;border:1px solid var(--line);background:#101724;color:var(--dim);font-size:11.5px;cursor:pointer;white-space:nowrap;transition:.2s}
+.ph b{display:block;font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:inherit;opacity:.8}
+.ph.done{color:var(--muted);border-color:#2a3550}
+.ph.cur{color:#fff;border-color:var(--accent);background:#2a1610;box-shadow:0 0 0 1px var(--accent) inset}
+.ph.deny.cur{border-color:#ef4444;background:#2a1013;box-shadow:0 0 0 1px #ef4444 inset}
+#progress{height:3px;background:#151d2c}
+#progress div{height:100%;background:var(--accent);width:0;transition:width .35s}
+main{flex:1;display:flex;min-height:0}
+#stage{flex:1;display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line)}
+#lanes{display:grid;grid-template-columns:repeat(8,1fr);border-bottom:1px solid var(--line);background:var(--panel)}
+.lane{padding:10px 6px 8px;text-align:center;border-right:1px solid #161f30;position:relative}
+.lane:last-child{border-right:0}
+.lane .badge{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:9px;font-weight:700;font-size:12px;color:#0a0e16;margin-bottom:4px}
+.lane .nm{font-weight:620;font-size:12.5px}
+.lane .sb{color:var(--dim);font-size:10.5px}
+.lane.active .badge{box-shadow:0 0 0 3px rgba(255,255,255,.18),0 0 18px currentColor}
+.wallet{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;min-height:22px;margin-top:6px}
+.tok{font-size:10px;padding:2px 6px;border-radius:10px;border:1px solid;white-space:nowrap;font-family:var(--mono);animation:pop .5s}
+@keyframes pop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+#diagram{flex:1;overflow:auto;position:relative}
+#diagram svg{display:block}
+#legend{display:flex;gap:16px;flex-wrap:wrap;padding:8px 16px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);background:var(--panel2)}
+#legend span{display:flex;align-items:center;gap:6px}
+#legend i{display:inline-block;width:26px;height:0;border-top:2px solid}
+aside{width:440px;display:flex;flex-direction:column;background:var(--panel);min-height:0}
+#detail{flex:1;overflow:auto;padding:16px 18px 24px}
+.phase-title{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--accent);font-weight:700}
+.phase-desc{color:var(--muted);font-size:12.5px;margin:4px 0 12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.stepno{font-family:var(--mono);font-size:12px;color:var(--dim)}
+h2{font-size:17px;margin:2px 0 8px;line-height:1.3}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tag{font-size:10.5px;padding:2px 8px;border-radius:10px;border:1px solid;font-weight:600}
+.desc{font-size:13.5px;color:#cfd6e4}
+.desc ul{padding-left:18px;margin:6px 0}
+.desc li{margin:3px 0}
+.desc code,.note code{font-family:var(--mono);font-size:12px;background:#1a2336;padding:1px 5px;border-radius:4px;color:#e2e8f0}
+.note{margin-top:12px;padding:9px 11px;border-left:3px solid #f59e0b;background:#221b0c;border-radius:0 6px 6px 0;font-size:12.5px;color:#f3e2bd}
+.sec{margin-top:14px;font-size:10.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--dim);font-weight:700}
+pre{margin:6px 0 0;background:#0a0f1a;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font:11.5px/1.5 var(--mono);color:#c9d4e6;white-space:pre-wrap;word-break:break-all}
+pre .k{color:#7dd3fc}pre .s{color:#a5e8b4}pre .c{color:#6b7891}pre .h{color:#fbbf24}
+.claims-cap{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12px;font-weight:600}
+.claims-cap .dot{width:10px;height:10px;border-radius:50%}
+.takeaways{margin-top:14px;padding:12px 14px;border:1px solid #3a2a20;background:#1b130e;border-radius:8px}
+.takeaways h3{margin:0 0 6px;font-size:13px;color:var(--accent)}
+.takeaways li{margin:5px 0;font-size:12.8px}
+body.simple .tech{display:none!important}
+#kbd{padding:8px 18px;border-top:1px solid var(--line);color:var(--dim);font-size:11px}
+#kbd kbd{font-family:var(--mono);background:#1a2336;border:1px solid var(--line2);border-radius:4px;padding:0 5px;color:var(--muted)}
+/* svg animation */
+.msg-new .ln{animation:draw .75s ease-out forwards}
+.msg-new .lbl{opacity:0;animation:fade .4s .35s forwards}
+.msg-new .self{animation:pulse 1.2s ease-out}
+@keyframes draw{from{stroke-dashoffset:var(--len)}to{stroke-dashoffset:0}}
+@keyframes fade{to{opacity:1}}
+@keyframes pulse{0%{opacity:0;transform:scale(.85)}40%{opacity:1;transform:scale(1.04)}100%{transform:scale(1)}}
+.msg-old{opacity:.55}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"></div>
+  <div>
+    <h1>Agent → Idira (OBO) → AI Gateway → MCP Server → Microsoft Graph</h1>
+    <div class="sub" id="subtitle"></div>
+  </div>
+  <div class="spacer"></div>
+  <div class="ctrl">
+    <select id="lang" title="Language"><option value="en">English</option><option value="zh-CN">简体中文</option><option value="zh-TW">繁體中文</option><option value="ko">한국어</option></select>
+    <div class="toggle"><button id="mSimple">Simple</button><button id="mDetail" class="on">Detailed</button></div>
+    <select id="speed" title="Playback speed"><option value="1.6">0.6×</option><option value="1" selected>1×</option><option value="0.6">1.6×</option><option value="0.35">3×</option></select>
+    <button id="bRestart" title="Restart (Home)">⟲</button>
+    <button id="bPrev" title="Previous (←)">◀</button>
+    <button id="bPlay" class="primary" title="Play / pause (Space)">▶ Play</button>
+    <button id="bNext" title="Next (→)">▶</button>
+  </div>
+</header>
+<div id="phases"></div>
+<div id="progress"><div></div></div>
+<main>
+  <section id="stage">
+    <div id="lanes"></div>
+    <div id="diagram"></div>
+    <div id="legend"></div>
+  </section>
+  <aside>
+    <div id="detail"></div>
+    <div id="kbd"></div>
+  </aside>
+</main>
+
+<script>
+/* ------------------------------------------------------------------ i18n (EN is the inline default in the data below) */
+const I18N = {
+/* ======================================================= 简体中文 */
+'zh-CN': {
+ ui:{ sub:'Prisma AIRS Agent Identity Security + AI Gateway · GA1 能力 · 同一 Entra ID 租户作为 Idira（SAML）、MCP Server 和 Graph（OAuth/OIDC）的 IdP',
+  simple:'简化', detailed:'详细', play:'▶ 播放', pause:'❚❚ 暂停', replay:'⟲ 重播', phase:'阶段', step:'步骤', internal:'内部处理',
+  wire:'报文细节', config:'配置', claims:'Token 声明', legendTail:'各角色下方的标签 = 其当前持有的凭据',
+  kbd:'<kbd>←</kbd> <kbd>→</kbd> 单步 · <kbd>Space</kbd> 播放/暂停 · <kbd>D</kbd> 简化/详细 · 点击阶段可跳转',
+  blocked:'未转发——未使用 MCP token、无 OBO、无 Graph 调用', takeTitle:'关键结论',
+  tRestart:'重新开始 (Home)', tPrev:'上一步 (←)', tNext:'下一步 (→)', tPlay:'播放 / 暂停 (Space)', tSpeed:'播放速度' },
+ lanes:{ user:['用户 · 浏览器','alice@contoso.com / 管理员'], agent:['AI Agent','OAuth 客户端'], scm:['SCM / SAI','Strata Cloud Manager'],
+  idira:['Idira','Agent 身份'], gw:['AI Gateway','Prisma AIRS'], entra:['Entra ID','IdP · SAML + OAuth'], mcp:['MCP Server','mcp.contoso.com'], graph:['Microsoft Graph','SaaS API'] },
+ tokens:{ session:'Entra 会话', saml:'SAML 断言', mcp:'MCP token（Entra）' },
+ kinds:{ front:'前端通道（浏览器重定向）', back:'后端通道 HTTPS', saml:'SAML 2.0（Idira ↔ Entra）', data:'MCP 数据路径', obo:'Entra OBO token 交换', deny:'拒绝', config:'管理员配置' },
+ src:{ V:'已验证 · 演示 / 深度解析', G:'GA1 文档', E:'Entra / OAuth 标准', I:'推断 · 需 PoC 验证', X:'示意值' },
+ claims:{
+  idira:'格式未公开，字段为示意。已明确的是：它代表用户 + agent，且从不离开 Gateway。',
+  mcp:'azp = AI Gateway 的 Entra 应用。没有 agent 相关声明：MCP Server 看到的是用户 + Gateway。',
+  gw:'GW token 格式（JWT 或 opaque）及有效期未公开，此处为示意。',
+  graph:'同一用户（oid），新的受众（Graph），新的客户端（appid = MCP Server）。Graph 只返回 alice 本人有权访问的数据。' },
+ phases:[
+  ['管理员准备','一次性管理员配置。Idira、MCP Server 和 Microsoft Graph 都信任同一个 Entra ID 租户（contoso.onmicrosoft.com）。'],
+  ['Agent 注册','在 Strata Cloud Manager 中完成注册后，agent 在 Idira 中获得持久身份以及 OAuth 客户端凭据。'],
+  ['发现','MCP 授权发现：agent 得知 AI Gateway 就是它的授权服务器。它从不直接与 Idira 或 Entra 通信。'],
+  ['Leg 1 · Idira OBO 登录','OAuth 2.1 授权码 + PKCE。Gateway 将 agent 的请求代理给 Idira；Idira 通过 SAML 在 Entra ID 上认证用户。结果是一个绑定用户 + agent（代表用户，on-behalf-of）的 Idira token。'],
+  ['Gateway 授权','Gateway 确定这对用户 + agent 可以访问哪些资源，并由用户确认同意。'],
+  ['Leg 2 · MCP 登录','在同一次登录流程中进行：用户同意之后、agent 拿到授权码之前。Gateway 作为 Entra 的 OAuth 客户端为 MCP Server 申请 token。Leg 1 留下的 Entra 会话让这一步静默完成（SSO）。'],
+  ['Agent 获取 token','agent 完成自己的 OAuth 流程，拿到由 Gateway 签发的 token，而不是由 Idira 或 Entra 签发。'],
+  ['工具调用 → Graph','每次工具调用都经过 Gateway：先检查策略，再替换请求头（GA1 凭据代理）。MCP Server 使用 Entra OBO 以用户身份调用 Microsoft Graph，无需再次登录。'],
+  ['被拒绝的调用','同一个 agent、同一个用户，调用一个策略不允许的工具。Gateway 直接拦截，后端完全不会被触达。'],
+  ['审计追踪','每一跳都留下证据：哪个用户、哪个 agent、哪个工具、什么决策。'] ],
+ steps:[
+  {t:'SAML 互信（交换元数据）',title:'将 Idira 与 Entra ID 联合（SAML 2.0）',desc:'管理员在 <b>Idira 控制台</b>中将 Entra ID 配置为 SAML IdP。Entra 中为 Idira 创建一个企业应用（SP Entity ID + ACS URL）；Idira 导入 Entra 的联合元数据（SSO URL、签名证书）。'},
+  {t:'CIE 目录同步（用户 + 组）',title:'通过 Cloud Identity Engine 将 Entra 用户和组同步到 AI Gateway',desc:'Entra ID 要<b>第二次</b>对接，这次是对接 Cloud Identity Engine（CIE），这样 AIS 策略才能引用用户和组（例如 <i>Finance users</i>）。在 SCM 中配置：<b>AI Security → AI Gateway → Admin Settings → Authentication → Configure in CIE</b>。CIE 每 5 分钟同步一次。',note:'Idira 和 CIE 彼此不通信。两者对接同一个 Entra 租户，且必须使用<b>相同的用户属性</b>（userPrincipalName），否则 Gateway 无法把 token 中的用户与策略中的用户对应起来。新建用户最多需要 5 分钟才能被识别。'},
+  {t:'应用注册：MCP API + GW 客户端',title:'在 Entra ID 中注册 MCP Server 和 Gateway',desc:'需要两个应用注册：<ul><li><b>MCP Server API</b>：暴露委托 scope <code>mcp.tools</code>，拥有 Graph 委托权限以及自己的凭据（OBO 需要）。</li><li><b>AI Gateway – MCP client</b>：机密客户端，重定向 URI 为 Gateway 的 Leg 2 回调地址，允许申请 <code>mcp.tools</code>。</li></ul>',note:'为 MCP Server 的 Graph 权限授予<b>管理员同意</b>。OBO 无法弹出同意页面，未同意时会返回 <code>consent_required</code>。'},
+  {t:'发布 PRM · 信任 Entra token',title:'MCP Server：受保护资源元数据 + token 校验',desc:'按照 MCP 授权规范，服务器声明 Entra ID 为其授权服务器，并校验 Entra 签发的 JWT（issuer、audience、scope，通过 JWKS 校验签名）。'},
+  {t:'MCP Registry + AIS 策略',title:'在 AI Gateway 中注册 MCP Server（SCM）',desc:'在 <b>MCP Registry → OAuth Metadata</b> 中，管理员填入 "AI Gateway – MCP client" 应用的<b>预注册</b> client_id/secret，将服务器分配到工作区，并定义 AIS 策略（agent × 用户 × 工具）。',note:'Entra ID 不支持动态客户端注册（RFC 7591），因此只能使用预注册客户端方式。'},
+  {t:'下发配置到数据平面',title:'配置下发到 Gateway 数据平面',desc:'SCM 是 agent、MCP 服务器和策略的统一管理平面，Gateway 数据平面（SaaS 或客户自运行的混合部署）负责执行。'},
+  {t:'注册 agent',title:'管理员在 SCM 中注册 AI Agent',desc:'Agent Identity → Register。重定向 URL 必须完全匹配：云端 agent 使用公网地址，本地 agent 使用 <code>http://localhost:&lt;port&gt;/callback</code>。'},
+  {t:'创建 agent + OAuth 客户端',title:'SAI 在 Idira 中创建 agent 身份',desc:'点击 Register 后，SCM 同步调用 SAI。SAI 在 Idira 中创建 agent 并生成其 OAuth 客户端（<code>ai_agent_&lt;uuid&gt;</code>，会出现在 authorize URL 中）。'},
+  {t:'Agent ID · client_id · secret',title:'返回身份与凭据'},
+  {t:'secret 仅显示一次',title:'client_secret 只显示一次',desc:'请保存到密钥管理系统。如果丢失，需要删除并重新注册 agent（GA1 不支持轮换）。'},
+  {t:'配置客户端凭据 + GW MCP 地址',title:'配置 agent',desc:'agent 获得 Gateway 的 MCP 端点以及自己的 client_id/secret，永远拿不到 Entra、Idira 或 MCP Server 的凭据。',note:'GA1 不正式支持客户端 / 终端侧 agent。此流程使用 localhost 重定向仅作示意。'},
+  {t:'POST /mcp（无 token）',title:'首次 MCP 请求未携带 token'},
+  {t:'401 + WWW-Authenticate',title:'Gateway 向 agent 发起认证质询'},
+  {t:'GET PRM + AS 元数据',title:'agent 发现 Gateway 的 /authorize 和 /token',desc:'agent 看到的授权服务器就是 Gateway 本身，Idira 和 Entra 都在它后面。'},
+  {t:'打开浏览器 → GW /authorize',title:'agent 发起 OAuth 2.1 + PKCE',desc:'agent 生成 PKCE verifier/challenge（S256），并在用户浏览器中打开 Gateway 的授权端点。'},
+  {t:'GET /authorize',title:'浏览器到达 Gateway'},
+  {t:'302 → Idira /authorize',title:'Gateway 将认证委托给 Idira',desc:'Gateway 作为 Idira 的 OAuth 客户端，发起自己的授权码流程。Idira 把授权码返回给 Gateway，而不是 agent。'},
+  {t:'GET Idira /authorize',title:'浏览器到达 Idira'},
+  {t:'SAML AuthnRequest → Entra',title:'Idira（SAML SP）重定向到 Entra ID（SAML IdP）'},
+  {t:'登录 + MFA',title:'用户在 Entra ID 上认证：唯一一次交互式登录',desc:'Entra 评估条件访问和 MFA，然后设置<b>会话 Cookie</b>。Leg 2 稍后会复用这个会话。'},
+  {t:'SAML Response（自动 POST 表单）',title:'Entra 签发经签名的 SAML 断言'},
+  {t:'POST /saml/acs',title:'断言送达 Idira 的 ACS',desc:'Idira 校验签名和受众，映射用户，并确认 <code>ai_agent_7f3c…</code> 是已注册的 agent、正在代表该用户操作。'},
+  {t:'302 授权码 → GW 回调',title:'Idira 返回授权码'},
+  {t:'GET /api/v2/oauth/idira/callback',title:'授权码到达 Gateway'},
+  {t:'兑换授权码（后端通道）',title:'Gateway 在后端直接兑换授权码'},
+  {t:'Idira token（用户 + agent）',title:'Idira token：用户 + agent，保留在 Gateway',desc:'这就是 on-behalf-of 绑定：<b>alice</b> 通过 <b>AI Agent</b> 进行操作。Gateway 负责缓存和刷新，agent 永远拿不到它。'},
+  {t:'策略预检 · 共享工作区',title:'Gateway 评估这对组合可访问的范围',desc:'<ul><li><b>用户</b>、<b>agent</b>（Workspace Access）和 <b>MCP 服务器</b>共同所属的工作区 → Finance-AI</li><li>AIS 策略允许 alice + AI Agent</li></ul>'},
+  {t:'同意页面',title:'同意页面',desc:'只列出共享的工作区和申请的 scope（例如 <code>mcp:servers:read …</code>）。'},
+  {t:'批准',title:'用户批准'},
+  {t:'302 → Entra /authorize（MCP scope）',title:'Gateway 作为 Entra 的 OAuth 客户端发起 Leg 2',desc:'Leg 2 在同一个浏览器流程中进行：用户同意之后、agent 拿到授权码之前。',note:'Entra 作为 MCP 授权服务器<b>尚未验证</b>，QA 演示使用的是 Keycloak。Entra v2 通过 scope 前缀标识 API，而不是 RFC 8707 的 <code>resource</code> 参数。需确认 Gateway 如何构造这个请求。'},
+  {t:'已有会话 → SSO',title:'静默 SSO：无需密码，无需 MFA',desc:'复用 Leg 1 的 Entra 会话 Cookie，无需二次登录。只有未对 <code>mcp.tools</code> 授予管理员同意时，才会出现同意提示。'},
+  {t:'302 授权码 → GW',title:'Entra 为 Gateway 返回授权码'},
+  {t:'GET /oauth/callback',title:'授权码到达 Gateway'},
+  {t:'POST /token（授权码 + client secret）',title:'Gateway 使用预注册客户端兑换授权码'},
+  {t:'MCP access + refresh token',title:'MCP token 按（用户, 服务器）存入 Gateway 保险库',desc:'Gateway 按（alice, mcp-server）保存 access token 和 refresh token，agent 永远看不到。'},
+  {t:'302 → localhost/callback?code',title:'Gateway 最后向 agent 发放授权码'},
+  {t:'传递授权码',title:'agent 收到授权码'},
+  {t:'POST /token（授权码 + verifier + secret）',title:'agent 兑换授权码：client_secret 只用这一次',desc:'这是唯一使用 client_secret 的地方，工具调用时从不发送。没有用户登录，客户端凭据本身毫无用处（GA1 不支持 client-credentials 授权）。'},
+  {t:'GW access token',title:'agent 获得 Gateway 自己签发的 token',desc:'两个 token，两个受众：Idira token 留在 Gateway；agent 持有的是 Gateway 签发、只在 Gateway 有效的 token。'},
+  {t:'tools/call search_mail',title:'agent 通过 Gateway 调用工具'},
+  {t:'校验 · 策略 ALLOW · 替换请求头',title:'Gateway 数据平面：先授权，再代理凭据',desc:'GA1 是<b>凭据代理</b>，而非 token 交换。MCP token 来自独立的 Leg 2 登录，并非由 agent token 派生。'},
+  {t:'tools/call + Bearer MCP token',title:'携带 Entra 签发的 MCP token 转发请求'},
+  {t:'校验 Entra JWT',title:'MCP Server 校验 token',desc:'校验签名（JWKS）、<code>iss</code>、<code>aud</code> = MCP 应用、<code>scp ∋ mcp.tools</code>。身份是 <b>alice</b>；调用方客户端（<code>azp</code>）是 AI Gateway。'},
+  {t:'OBO：jwt-bearer 授权',title:'Entra On-Behalf-Of：换取 Graph token',desc:'MCP Server 出示 alice 的 token，申请一个受众为 Microsoft Graph 的新 token。这就是<b>对 SaaS 的 SSO</b>：无需用户交互，用户身份一路传递。',note:'两种不同的 "OBO"：Idira 的 on-behalf-of（Leg 1）是一种委托<i>关系</i>，GA1 中不做 token 交换；这里的 Entra OBO 是真正的 token 交换，由 MCP Server 在 AIRS 之外完成。'},
+  {t:'Graph token（alice）',title:'为 alice 签发 Graph token'},
+  {t:'GET /me/messages',title:'MCP Server 以 alice 身份调用 Microsoft Graph'},
+  {t:'200 · 仅 alice 的邮件',title:'Graph 按 alice 本人的权限执行',desc:'实际权限 = 委托 scope（Mail.Read）∩ alice 本人的权限。这是纵深防御：Gateway 策略（agent × 用户 × 工具）∩ 后端权限（用户）。'},
+  {t:'工具结果',title:'结果经 Gateway 返回'},
+  {t:'工具结果（已记录）',title:'Gateway 记录并返回结果',desc:'Gateway 记录用户、agent、工具、决策、参数和响应。工作区护栏可以检查返回内容。'},
+  {t:'tools/call send_mail',title:'同一个 agent 尝试调用未授权的工具'},
+  {t:'策略 → DENY',title:'AIS 策略拒绝：用户 × agent × 工具',desc:'alice 本人可以发邮件，但策略没有把 <code>send_mail</code> 授予 <b>AI Agent</b>。agent 身份改变了结果。仅靠 Entra 和 Graph 做不到这一点，因为它们的 token 中不标识 agent。'},
+  {t:'拒绝访问',title:'返回拒绝访问，后端完全未被触达',desc:'MCP Server、Entra OBO 和 Microsoft Graph 都不会被触及。这次尝试以 decision = deny 记入日志。'},
+  {t:'SCM → Agent Identity → 审计日志',title:'SCM 审计日志'},
+  {t:'Observability → 日志',title:'AI Gateway 可观测性'},
+  {t:'Agent 登录事件',title:'Idira 控制台',desc:'Agent 登录事件显示哪个用户在何时授权了哪个 agent。'},
+  {t:'登录日志',title:'Entra ID 登录日志',desc:'<ul><li><b>交互式</b>：alice → Idira（SAML），含 MFA / 条件访问结果</li><li><b>非交互式</b>：alice → AI Gateway – MCP client（Leg 2、刷新）</li><li><b>非交互式</b>：alice → MCP Server API → Microsoft Graph（OBO）</li></ul>按用户（oid）和时间与 SCM、Gateway 日志关联。'} ],
+ takeaways:`<li><b>只有一次交互式登录。</b>用户在 Leg 1 中经 Idira（SAML）登录 Entra 一次，Leg 2 和 Graph 访问通过 Entra SSO 和 OBO 复用这次登录。</li>
+<li><b>四个 token，四个受众，没有一个被转发到自己的受众之外：</b>GW token（agent → GW）· Idira token（留在 GW）· MCP token（GW → MCP）· Graph token（MCP → Graph）。</li>
+<li><b>Agent 身份在 Gateway 上执行</b>，体现在策略和审计中。下游 token 携带的是用户（+ Gateway / MCP 应用），而不是 agent，因为 GA1 没有 token 交换。</li>
+<li><b>拒绝发生在使用任何后端凭据之前。</b>agent 从不持有 Entra、MCP 或 Graph 凭据。</li>
+<li><b>需在 PoC 中验证：</b>Entra 作为 Leg 2 的 MCP 授权服务器（scope 与 <code>resource</code>、预注册客户端），以及 GW token 的格式和有效期。</li>`
+},
+
+/* ======================================================= 繁體中文 */
+'zh-TW': {
+ ui:{ sub:'Prisma AIRS Agent Identity Security + AI Gateway · GA1 功能 · 同一個 Entra ID 租用戶作為 Idira（SAML）、MCP Server 與 Graph（OAuth/OIDC）的 IdP',
+  simple:'簡化', detailed:'詳細', play:'▶ 播放', pause:'❚❚ 暫停', replay:'⟲ 重播', phase:'階段', step:'步驟', internal:'內部處理',
+  wire:'封包細節', config:'設定', claims:'Token 宣告', legendTail:'各角色下方的標籤 = 其目前持有的憑證',
+  kbd:'<kbd>←</kbd> <kbd>→</kbd> 逐步 · <kbd>Space</kbd> 播放/暫停 · <kbd>D</kbd> 簡化/詳細 · 點選階段可跳轉',
+  blocked:'未轉送：未使用 MCP token、無 OBO、無 Graph 呼叫', takeTitle:'重點結論',
+  tRestart:'重新開始 (Home)', tPrev:'上一步 (←)', tNext:'下一步 (→)', tPlay:'播放 / 暫停 (Space)', tSpeed:'播放速度' },
+ lanes:{ user:['使用者 · 瀏覽器','alice@contoso.com / 管理員'], agent:['AI Agent','OAuth 用戶端'], scm:['SCM / SAI','Strata Cloud Manager'],
+  idira:['Idira','Agent 身分'], gw:['AI Gateway','Prisma AIRS'], entra:['Entra ID','IdP · SAML + OAuth'], mcp:['MCP Server','mcp.contoso.com'], graph:['Microsoft Graph','SaaS API'] },
+ tokens:{ session:'Entra 工作階段', saml:'SAML 判斷提示', mcp:'MCP token（Entra）' },
+ kinds:{ front:'前端通道（瀏覽器重新導向）', back:'後端通道 HTTPS', saml:'SAML 2.0（Idira ↔ Entra）', data:'MCP 資料路徑', obo:'Entra OBO token 交換', deny:'拒絕', config:'管理員設定' },
+ src:{ V:'已驗證 · 示範 / 深度解析', G:'GA1 文件', E:'Entra / OAuth 標準', I:'推論 · 需 PoC 驗證', X:'示意值' },
+ claims:{
+  idira:'格式未公開，欄位為示意。已明確的是：它代表使用者 + agent，且從不離開 Gateway。',
+  mcp:'azp = AI Gateway 的 Entra 應用程式。沒有 agent 相關宣告：MCP Server 看到的是使用者 + Gateway。',
+  gw:'GW token 格式（JWT 或 opaque）與有效期未公開，此處為示意。',
+  graph:'同一使用者（oid），新的對象（Graph），新的用戶端（appid = MCP Server）。Graph 只傳回 alice 本人有權存取的資料。' },
+ phases:[
+  ['管理員準備','一次性管理員設定。Idira、MCP Server 與 Microsoft Graph 都信任同一個 Entra ID 租用戶（contoso.onmicrosoft.com）。'],
+  ['Agent 註冊','在 Strata Cloud Manager 完成註冊後，agent 在 Idira 中取得持久身分以及 OAuth 用戶端憑證。'],
+  ['探索','MCP 授權探索：agent 得知 AI Gateway 就是它的授權伺服器。它從不直接與 Idira 或 Entra 通訊。'],
+  ['Leg 1 · Idira OBO 登入','OAuth 2.1 授權碼 + PKCE。Gateway 將 agent 的請求代理給 Idira；Idira 透過 SAML 在 Entra ID 上驗證使用者。結果是一個綁定使用者 + agent（代表使用者，on-behalf-of）的 Idira token。'],
+  ['Gateway 授權','Gateway 判定這組使用者 + agent 可以存取哪些資源，並由使用者確認同意。'],
+  ['Leg 2 · MCP 登入','在同一次登入流程中進行：使用者同意之後、agent 取得授權碼之前。Gateway 作為 Entra 的 OAuth 用戶端為 MCP Server 申請 token。Leg 1 留下的 Entra 工作階段讓這一步靜默完成（SSO）。'],
+  ['Agent 取得 token','agent 完成自己的 OAuth 流程，取得由 Gateway 簽發的 token，而不是由 Idira 或 Entra 簽發。'],
+  ['工具呼叫 → Graph','每次工具呼叫都經過 Gateway：先檢查原則，再替換請求標頭（GA1 憑證代理）。MCP Server 使用 Entra OBO 以使用者身分呼叫 Microsoft Graph，無需再次登入。'],
+  ['被拒絕的呼叫','同一個 agent、同一個使用者，呼叫一個原則不允許的工具。Gateway 直接攔截，後端完全不會被觸及。'],
+  ['稽核軌跡','每一跳都留下證據：哪個使用者、哪個 agent、哪個工具、什麼決策。'] ],
+ steps:[
+  {t:'SAML 互信（交換中繼資料）',title:'將 Idira 與 Entra ID 同盟（SAML 2.0）',desc:'管理員在 <b>Idira 主控台</b>中將 Entra ID 設定為 SAML IdP。Entra 中為 Idira 建立一個企業應用程式（SP Entity ID + ACS URL）；Idira 匯入 Entra 的同盟中繼資料（SSO URL、簽署憑證）。'},
+  {t:'CIE 目錄同步（使用者 + 群組）',title:'透過 Cloud Identity Engine 將 Entra 使用者與群組同步到 AI Gateway',desc:'Entra ID 要<b>第二次</b>對接，這次是對接 Cloud Identity Engine（CIE），這樣 AIS 原則才能引用使用者與群組（例如 <i>Finance users</i>）。在 SCM 中設定：<b>AI Security → AI Gateway → Admin Settings → Authentication → Configure in CIE</b>。CIE 每 5 分鐘同步一次。',note:'Idira 與 CIE 彼此不通訊。兩者對接同一個 Entra 租用戶，且必須使用<b>相同的使用者屬性</b>（userPrincipalName），否則 Gateway 無法把 token 中的使用者與原則中的使用者對應起來。新建立的使用者最多需要 5 分鐘才能被識別。'},
+  {t:'應用程式註冊：MCP API + GW 用戶端',title:'在 Entra ID 中註冊 MCP Server 與 Gateway',desc:'需要兩個應用程式註冊：<ul><li><b>MCP Server API</b>：公開委派 scope <code>mcp.tools</code>，擁有 Graph 委派權限以及自己的憑證（OBO 需要）。</li><li><b>AI Gateway – MCP client</b>：機密用戶端，重新導向 URI 為 Gateway 的 Leg 2 回呼位址，允許申請 <code>mcp.tools</code>。</li></ul>',note:'為 MCP Server 的 Graph 權限授與<b>管理員同意</b>。OBO 無法顯示同意頁面，未同意時會傳回 <code>consent_required</code>。'},
+  {t:'發佈 PRM · 信任 Entra token',title:'MCP Server：受保護資源中繼資料 + token 驗證',desc:'依照 MCP 授權規格，伺服器宣告 Entra ID 為其授權伺服器，並驗證 Entra 簽發的 JWT（issuer、audience、scope，透過 JWKS 驗證簽章）。'},
+  {t:'MCP Registry + AIS 原則',title:'在 AI Gateway 中註冊 MCP Server（SCM）',desc:'在 <b>MCP Registry → OAuth Metadata</b> 中，管理員填入 "AI Gateway – MCP client" 應用程式的<b>預先註冊</b> client_id/secret，將伺服器指派到工作區，並定義 AIS 原則（agent × 使用者 × 工具）。',note:'Entra ID 不支援動態用戶端註冊（RFC 7591），因此只能使用預先註冊用戶端的方式。'},
+  {t:'推送設定到資料平面',title:'設定推送到 Gateway 資料平面',desc:'SCM 是 agent、MCP 伺服器與原則的統一管理平面，Gateway 資料平面（SaaS 或客戶自行運行的混合部署）負責執行。'},
+  {t:'註冊 agent',title:'管理員在 SCM 中註冊 AI Agent',desc:'Agent Identity → Register。重新導向 URL 必須完全相符：雲端 agent 使用公開位址，本機 agent 使用 <code>http://localhost:&lt;port&gt;/callback</code>。'},
+  {t:'建立 agent + OAuth 用戶端',title:'SAI 在 Idira 中建立 agent 身分',desc:'按下 Register 後，SCM 同步呼叫 SAI。SAI 在 Idira 中建立 agent 並產生其 OAuth 用戶端（<code>ai_agent_&lt;uuid&gt;</code>，會出現在 authorize URL 中）。'},
+  {t:'Agent ID · client_id · secret',title:'傳回身分與憑證'},
+  {t:'secret 僅顯示一次',title:'client_secret 只顯示一次',desc:'請儲存到密碼管理系統。如果遺失，需要刪除並重新註冊 agent（GA1 不支援輪替）。'},
+  {t:'設定用戶端憑證 + GW MCP 位址',title:'設定 agent',desc:'agent 取得 Gateway 的 MCP 端點以及自己的 client_id/secret，永遠拿不到 Entra、Idira 或 MCP Server 的憑證。',note:'GA1 不正式支援用戶端 / 端點型 agent。此流程使用 localhost 重新導向僅作示意。'},
+  {t:'POST /mcp（無 token）',title:'第一次 MCP 請求未攜帶 token'},
+  {t:'401 + WWW-Authenticate',title:'Gateway 向 agent 發出驗證挑戰'},
+  {t:'GET PRM + AS 中繼資料',title:'agent 探索 Gateway 的 /authorize 與 /token',desc:'agent 看到的授權伺服器就是 Gateway 本身，Idira 與 Entra 都在它後面。'},
+  {t:'開啟瀏覽器 → GW /authorize',title:'agent 發起 OAuth 2.1 + PKCE',desc:'agent 產生 PKCE verifier/challenge（S256），並在使用者瀏覽器中開啟 Gateway 的授權端點。'},
+  {t:'GET /authorize',title:'瀏覽器抵達 Gateway'},
+  {t:'302 → Idira /authorize',title:'Gateway 將驗證委派給 Idira',desc:'Gateway 作為 Idira 的 OAuth 用戶端，發起自己的授權碼流程。Idira 把授權碼傳回給 Gateway，而不是 agent。'},
+  {t:'GET Idira /authorize',title:'瀏覽器抵達 Idira'},
+  {t:'SAML AuthnRequest → Entra',title:'Idira（SAML SP）重新導向到 Entra ID（SAML IdP）'},
+  {t:'登入 + MFA',title:'使用者在 Entra ID 上驗證：唯一一次互動式登入',desc:'Entra 評估條件式存取與 MFA，然後設定<b>工作階段 Cookie</b>。Leg 2 稍後會重複使用這個工作階段。'},
+  {t:'SAML Response（自動 POST 表單）',title:'Entra 簽發經簽署的 SAML 判斷提示'},
+  {t:'POST /saml/acs',title:'判斷提示送達 Idira 的 ACS',desc:'Idira 驗證簽章與對象，對應使用者，並確認 <code>ai_agent_7f3c…</code> 是已註冊的 agent、正在代表該使用者操作。'},
+  {t:'302 授權碼 → GW 回呼',title:'Idira 傳回授權碼'},
+  {t:'GET /api/v2/oauth/idira/callback',title:'授權碼抵達 Gateway'},
+  {t:'兌換授權碼（後端通道）',title:'Gateway 在後端直接兌換授權碼'},
+  {t:'Idira token（使用者 + agent）',title:'Idira token：使用者 + agent，保留在 Gateway',desc:'這就是 on-behalf-of 綁定：<b>alice</b> 透過 <b>AI Agent</b> 進行操作。Gateway 負責快取與更新，agent 永遠拿不到它。'},
+  {t:'原則預檢 · 共用工作區',title:'Gateway 評估這組組合可存取的範圍',desc:'<ul><li><b>使用者</b>、<b>agent</b>（Workspace Access）與 <b>MCP 伺服器</b>共同所屬的工作區 → Finance-AI</li><li>AIS 原則允許 alice + AI Agent</li></ul>'},
+  {t:'同意頁面',title:'同意頁面',desc:'只列出共用的工作區與申請的 scope（例如 <code>mcp:servers:read …</code>）。'},
+  {t:'核准',title:'使用者核准'},
+  {t:'302 → Entra /authorize（MCP scope）',title:'Gateway 作為 Entra 的 OAuth 用戶端發起 Leg 2',desc:'Leg 2 在同一個瀏覽器流程中進行：使用者同意之後、agent 取得授權碼之前。',note:'Entra 作為 MCP 授權伺服器<b>尚未驗證</b>，QA 示範使用的是 Keycloak。Entra v2 透過 scope 前綴識別 API，而不是 RFC 8707 的 <code>resource</code> 參數。需確認 Gateway 如何組出這個請求。'},
+  {t:'既有工作階段 → SSO',title:'靜默 SSO：無需密碼，無需 MFA',desc:'重複使用 Leg 1 的 Entra 工作階段 Cookie，無需再次登入。只有未對 <code>mcp.tools</code> 授與管理員同意時，才會出現同意提示。'},
+  {t:'302 授權碼 → GW',title:'Entra 為 Gateway 傳回授權碼'},
+  {t:'GET /oauth/callback',title:'授權碼抵達 Gateway'},
+  {t:'POST /token（授權碼 + client secret）',title:'Gateway 使用預先註冊的用戶端兌換授權碼'},
+  {t:'MCP access + refresh token',title:'MCP token 依（使用者, 伺服器）存入 Gateway 保存庫',desc:'Gateway 依（alice, mcp-server）保存 access token 與 refresh token，agent 永遠看不到。'},
+  {t:'302 → localhost/callback?code',title:'Gateway 最後向 agent 發放授權碼'},
+  {t:'傳遞授權碼',title:'agent 收到授權碼'},
+  {t:'POST /token（授權碼 + verifier + secret）',title:'agent 兌換授權碼：client_secret 只用這一次',desc:'這是唯一使用 client_secret 的地方，工具呼叫時從不傳送。沒有使用者登入，用戶端憑證本身毫無用處（GA1 不支援 client-credentials 授權）。'},
+  {t:'GW access token',title:'agent 取得 Gateway 自己簽發的 token',desc:'兩個 token，兩個對象：Idira token 留在 Gateway；agent 持有的是 Gateway 簽發、只在 Gateway 有效的 token。'},
+  {t:'tools/call search_mail',title:'agent 透過 Gateway 呼叫工具'},
+  {t:'驗證 · 原則 ALLOW · 替換標頭',title:'Gateway 資料平面：先授權，再代理憑證',desc:'GA1 是<b>憑證代理</b>，而非 token 交換。MCP token 來自獨立的 Leg 2 登入，並非由 agent token 衍生。'},
+  {t:'tools/call + Bearer MCP token',title:'攜帶 Entra 簽發的 MCP token 轉送請求'},
+  {t:'驗證 Entra JWT',title:'MCP Server 驗證 token',desc:'驗證簽章（JWKS）、<code>iss</code>、<code>aud</code> = MCP 應用程式、<code>scp ∋ mcp.tools</code>。身分是 <b>alice</b>；呼叫端用戶端（<code>azp</code>）是 AI Gateway。'},
+  {t:'OBO：jwt-bearer 授權',title:'Entra On-Behalf-Of：換取 Graph token',desc:'MCP Server 出示 alice 的 token，申請一個對象為 Microsoft Graph 的新 token。這就是<b>對 SaaS 的 SSO</b>：無需使用者互動，使用者身分一路傳遞。',note:'兩種不同的 "OBO"：Idira 的 on-behalf-of（Leg 1）是一種委派<i>關係</i>，GA1 中不做 token 交換；這裡的 Entra OBO 是真正的 token 交換，由 MCP Server 在 AIRS 之外完成。'},
+  {t:'Graph token（alice）',title:'為 alice 簽發 Graph token'},
+  {t:'GET /me/messages',title:'MCP Server 以 alice 身分呼叫 Microsoft Graph'},
+  {t:'200 · 僅 alice 的郵件',title:'Graph 依 alice 本人的權限執行',desc:'實際權限 = 委派 scope（Mail.Read）∩ alice 本人的權限。這是縱深防禦：Gateway 原則（agent × 使用者 × 工具）∩ 後端權限（使用者）。'},
+  {t:'工具結果',title:'結果經 Gateway 傳回'},
+  {t:'工具結果（已記錄）',title:'Gateway 記錄並傳回結果',desc:'Gateway 記錄使用者、agent、工具、決策、參數與回應。工作區防護機制可以檢查回傳內容。'},
+  {t:'tools/call send_mail',title:'同一個 agent 嘗試呼叫未授權的工具'},
+  {t:'原則 → DENY',title:'AIS 原則拒絕：使用者 × agent × 工具',desc:'alice 本人可以寄信，但原則沒有把 <code>send_mail</code> 授與 <b>AI Agent</b>。agent 身分改變了結果。僅靠 Entra 與 Graph 做不到這一點，因為它們的 token 中不識別 agent。'},
+  {t:'拒絕存取',title:'傳回拒絕存取，後端完全未被觸及',desc:'MCP Server、Entra OBO 與 Microsoft Graph 都不會被觸及。這次嘗試以 decision = deny 記入記錄。'},
+  {t:'SCM → Agent Identity → 稽核記錄',title:'SCM 稽核記錄'},
+  {t:'Observability → 記錄',title:'AI Gateway 可觀測性'},
+  {t:'Agent 登入事件',title:'Idira 主控台',desc:'Agent 登入事件顯示哪個使用者在何時授權了哪個 agent。'},
+  {t:'登入記錄',title:'Entra ID 登入記錄',desc:'<ul><li><b>互動式</b>：alice → Idira（SAML），含 MFA / 條件式存取結果</li><li><b>非互動式</b>：alice → AI Gateway – MCP client（Leg 2、更新）</li><li><b>非互動式</b>：alice → MCP Server API → Microsoft Graph（OBO）</li></ul>依使用者（oid）與時間和 SCM、Gateway 記錄關聯。'} ],
+ takeaways:`<li><b>只有一次互動式登入。</b>使用者在 Leg 1 中經 Idira（SAML）登入 Entra 一次，Leg 2 與 Graph 存取透過 Entra SSO 和 OBO 重複使用這次登入。</li>
+<li><b>四個 token，四個對象，沒有一個被轉送到自己的對象之外：</b>GW token（agent → GW）· Idira token（留在 GW）· MCP token（GW → MCP）· Graph token（MCP → Graph）。</li>
+<li><b>Agent 身分在 Gateway 上執行</b>，展現在原則與稽核中。下游 token 攜帶的是使用者（+ Gateway / MCP 應用程式），而不是 agent，因為 GA1 沒有 token 交換。</li>
+<li><b>拒絕發生在使用任何後端憑證之前。</b>agent 從不持有 Entra、MCP 或 Graph 憑證。</li>
+<li><b>需在 PoC 中驗證：</b>Entra 作為 Leg 2 的 MCP 授權伺服器（scope 與 <code>resource</code>、預先註冊用戶端），以及 GW token 的格式與有效期。</li>`
+},
+
+/* ======================================================= 한국어 */
+'ko': {
+ ui:{ sub:'Prisma AIRS Agent Identity Security + AI Gateway · GA1 기능 · 단일 Entra ID 테넌트를 Idira(SAML), MCP Server, Graph(OAuth/OIDC)의 IdP로 사용',
+  simple:'간략', detailed:'상세', play:'▶ 재생', pause:'❚❚ 일시정지', replay:'⟲ 다시 재생', phase:'단계', step:'스텝', internal:'내부 처리',
+  wire:'메시지 상세', config:'구성', claims:'토큰 클레임', legendTail:'각 액터 아래 칩 = 현재 보유한 자격 증명',
+  kbd:'<kbd>←</kbd> <kbd>→</kbd> 이동 · <kbd>Space</kbd> 재생/정지 · <kbd>D</kbd> 간략/상세 · 단계를 클릭하면 이동',
+  blocked:'전달되지 않음 — MCP 토큰 미사용, OBO 없음, Graph 호출 없음', takeTitle:'핵심 요약',
+  tRestart:'처음부터 (Home)', tPrev:'이전 (←)', tNext:'다음 (→)', tPlay:'재생 / 정지 (Space)', tSpeed:'재생 속도' },
+ lanes:{ user:['사용자 · 브라우저','alice@contoso.com / 관리자'], agent:['AI Agent','OAuth 클라이언트'], scm:['SCM / SAI','Strata Cloud Manager'],
+  idira:['Idira','에이전트 ID'], gw:['AI Gateway','Prisma AIRS'], entra:['Entra ID','IdP · SAML + OAuth'], mcp:['MCP Server','mcp.contoso.com'], graph:['Microsoft Graph','SaaS API'] },
+ tokens:{ session:'Entra 세션', pkce:'PKCE verifier', saml:'SAML 어설션', idira:'Idira 토큰', mcp:'MCP 토큰 (Entra)', gw:'GW 토큰', graph:'Graph 토큰' },
+ kinds:{ front:'프런트 채널 (브라우저 리디렉션)', back:'백 채널 HTTPS', saml:'SAML 2.0 (Idira ↔ Entra)', data:'MCP 데이터 경로', obo:'Entra OBO 토큰 교환', deny:'거부', config:'관리자 구성' },
+ src:{ V:'검증됨 · 데모 / 딥다이브', G:'GA1 문서', E:'Entra / OAuth 표준', I:'추정 · PoC에서 검증 필요', X:'예시 값' },
+ claims:{
+  idira:'형식은 공개되지 않았으며 필드는 예시입니다. 문서화된 사실: 사용자 + 에이전트를 나타내며 Gateway 밖으로 나가지 않습니다.',
+  mcp:'azp = AI Gateway의 Entra 앱. 에이전트 클레임은 없습니다. MCP Server는 사용자 + Gateway만 봅니다.',
+  gw:'GW 토큰 형식(JWT 또는 opaque)과 수명은 공개되지 않았으며 예시입니다.',
+  graph:'같은 사용자(oid), 새 대상(Graph), 새 클라이언트(appid = MCP Server). Graph는 alice 본인이 접근할 수 있는 데이터만 반환합니다.' },
+ phases:[
+  ['관리자 사전 구성','1회성 관리자 구성. Idira, MCP Server, Microsoft Graph 모두 동일한 Entra ID 테넌트(contoso.onmicrosoft.com)를 신뢰합니다.'],
+  ['에이전트 등록','Strata Cloud Manager에서 등록하면 에이전트는 Idira에 영구 ID와 OAuth 클라이언트 자격 증명을 얻습니다.'],
+  ['디스커버리','MCP 권한 부여 디스커버리: 에이전트는 AI Gateway가 자신의 권한 부여 서버임을 알게 됩니다. Idira나 Entra와 직접 통신하지 않습니다.'],
+  ['Leg 1 · Idira OBO 로그인','OAuth 2.1 인가 코드 + PKCE. Gateway가 에이전트의 요청을 Idira로 중개하고, Idira는 SAML로 Entra ID에서 사용자를 인증합니다. 결과: 사용자 + 에이전트(on-behalf-of)를 묶은 Idira 토큰.'],
+  ['Gateway 권한 부여','Gateway가 이 사용자 + 에이전트 조합이 접근할 수 있는 범위를 결정하고, 사용자가 동의합니다.'],
+  ['Leg 2 · MCP 로그인','같은 로그인 흐름 안에서 동의 이후, 에이전트가 코드를 받기 전에 실행됩니다. Gateway가 MCP Server를 위한 Entra의 OAuth 클라이언트가 됩니다. Leg 1의 Entra 세션 덕분에 조용히 처리됩니다(SSO).'],
+  ['에이전트 토큰','에이전트가 자신의 OAuth 흐름을 마치고 Gateway가 발급한 토큰을 받습니다. Idira나 Entra가 발급한 토큰이 아닙니다.'],
+  ['도구 호출 → Graph','모든 도구 호출은 Gateway를 거칩니다: 정책 검사 후 헤더 교체(GA1 자격 증명 중개). MCP Server는 Entra OBO로 사용자로서 Microsoft Graph를 호출하며, 추가 로그인은 없습니다.'],
+  ['거부된 호출','같은 에이전트, 같은 사용자, 정책이 허용하지 않는 도구. Gateway가 차단하며 백엔드에는 도달하지 않습니다.'],
+  ['감사 추적','모든 홉에 증거가 남습니다: 어떤 사용자, 어떤 에이전트, 어떤 도구, 어떤 결정.'] ],
+ steps:[
+  {t:'SAML 신뢰 (메타데이터 교환)',title:'Idira와 Entra ID 페더레이션 (SAML 2.0)',desc:'관리자가 <b>Idira 콘솔</b>에서 Entra ID를 SAML IdP로 연결합니다. Entra에는 Idira용 엔터프라이즈 앱(SP Entity ID + ACS URL)이 생성되고, Idira는 Entra의 페더레이션 메타데이터(SSO URL, 서명 인증서)를 가져옵니다.'},
+  {t:'CIE 디렉터리 동기화 (사용자 + 그룹)',title:'Cloud Identity Engine으로 Entra 사용자·그룹을 AI Gateway에 동기화',desc:'Entra ID를 <b>두 번째로</b> 연결합니다. 이번에는 Cloud Identity Engine(CIE)에 연결하여 AIS 정책이 사용자와 그룹(예: <i>Finance users</i>)을 참조할 수 있게 합니다. SCM에서 구성: <b>AI Security → AI Gateway → Admin Settings → Authentication → Configure in CIE</b>. CIE는 5분마다 동기화합니다.',note:'Idira와 CIE는 서로 통신하지 않습니다. 둘 다 같은 Entra 테넌트에 연결되며 <b>같은 사용자 속성</b>(userPrincipalName)을 써야 합니다. 그렇지 않으면 Gateway가 토큰의 사용자와 정책의 사용자를 매칭할 수 없습니다. 새 사용자는 인식되기까지 최대 5분이 걸릴 수 있습니다.'},
+  {t:'앱 등록: MCP API + GW 클라이언트',title:'Entra ID에 MCP Server와 Gateway 등록',desc:'앱 등록은 두 개입니다:<ul><li><b>MCP Server API</b>: 위임 scope <code>mcp.tools</code>를 노출하고, Graph 위임 권한과 자체 자격 증명(OBO용)을 가집니다.</li><li><b>AI Gateway – MCP client</b>: 기밀 클라이언트이며, 리디렉션 URI는 Gateway의 Leg 2 콜백이고, <code>mcp.tools</code>를 요청할 수 있습니다.</li></ul>',note:'MCP Server의 Graph 권한에 <b>관리자 동의</b>를 부여하세요. OBO는 동의 화면을 띄울 수 없으므로 동의가 없으면 <code>consent_required</code>로 실패합니다.'},
+  {t:'PRM 게시 · Entra 토큰 신뢰',title:'MCP Server: 보호 리소스 메타데이터 + 토큰 검증',desc:'MCP 권한 부여 사양에 따라 서버는 Entra ID를 권한 부여 서버로 알리고, Entra가 발급한 JWT(issuer, audience, scope, JWKS 서명)를 검증합니다.'},
+  {t:'MCP Registry + AIS 정책',title:'AI Gateway에 MCP Server 등록 (SCM)',desc:'<b>MCP Registry → OAuth Metadata</b>에 관리자가 "AI Gateway – MCP client" 앱의 <b>사전 등록된</b> client_id/secret을 입력하고, 서버를 워크스페이스에 할당하며, AIS 정책(에이전트 × 사용자 × 도구)을 정의합니다.',note:'Entra ID는 동적 클라이언트 등록(RFC 7591)을 지원하지 않으므로 사전 등록 클라이언트 방식만 사용할 수 있습니다.'},
+  {t:'데이터 플레인에 구성 배포',title:'구성이 Gateway 데이터 플레인에 반영',desc:'SCM은 에이전트, MCP 서버, 정책의 단일 관리 플레인입니다. Gateway 데이터 플레인(SaaS 또는 고객 운영 하이브리드)이 이를 집행합니다.'},
+  {t:'에이전트 등록',title:'관리자가 SCM에서 AI Agent 등록',desc:'Agent Identity → Register. 리디렉션 URL은 정확히 일치해야 합니다. 클라우드 에이전트는 공개 엔드포인트, 로컬 에이전트는 <code>http://localhost:&lt;port&gt;/callback</code>을 사용합니다.'},
+  {t:'에이전트 + OAuth 클라이언트 생성',title:'SAI가 Idira에 에이전트 ID 생성',desc:'Register를 누르면 SCM이 SAI를 연속 호출합니다. SAI는 Idira에 에이전트를 만들고 OAuth 클라이언트(<code>ai_agent_&lt;uuid&gt;</code>, authorize URL에 표시됨)를 생성합니다.'},
+  {t:'Agent ID · client_id · secret',title:'ID와 자격 증명 반환'},
+  {t:'secret은 한 번만 표시',title:'client_secret은 한 번만 표시됩니다',desc:'시크릿 관리 도구에 저장하세요. 분실하면 에이전트를 삭제 후 다시 등록해야 합니다(GA1에는 교체 기능 없음).'},
+  {t:'클라이언트 자격 증명 + GW MCP URL 설정',title:'에이전트 구성',desc:'에이전트는 Gateway MCP 엔드포인트와 자신의 client_id/secret만 받습니다. Entra, Idira, MCP Server의 자격 증명은 절대 받지 않습니다.',note:'GA1은 클라이언트 / 엔드포인트형 에이전트를 공식 지원하지 않습니다. 이 흐름의 localhost 리디렉션은 설명용입니다.'},
+  {t:'POST /mcp (토큰 없음)',title:'토큰 없이 첫 MCP 요청'},
+  {t:'401 + WWW-Authenticate',title:'Gateway가 에이전트에 인증 요구'},
+  {t:'GET PRM + AS 메타데이터',title:'에이전트가 Gateway의 /authorize와 /token 발견',desc:'에이전트가 보는 권한 부여 서버는 Gateway 자체이며, Idira와 Entra는 그 뒤에 있습니다.'},
+  {t:'브라우저 열기 → GW /authorize',title:'에이전트가 OAuth 2.1 + PKCE 시작',desc:'에이전트가 PKCE verifier/challenge(S256)를 생성하고 사용자 브라우저에서 Gateway의 authorize 엔드포인트를 엽니다.'},
+  {t:'GET /authorize',title:'브라우저가 Gateway에 도달'},
+  {t:'302 → Idira /authorize',title:'Gateway가 인증을 Idira에 위임',desc:'Gateway는 Idira의 OAuth 클라이언트로서 자체 인가 코드 흐름을 시작합니다. Idira는 코드를 에이전트가 아닌 Gateway에 반환합니다.'},
+  {t:'GET Idira /authorize',title:'브라우저가 Idira에 도달'},
+  {t:'SAML AuthnRequest → Entra',title:'Idira(SAML SP)가 Entra ID(SAML IdP)로 리디렉션'},
+  {t:'로그인 + MFA',title:'사용자가 Entra ID에서 인증 — 유일한 대화형 로그인',desc:'Entra가 조건부 액세스와 MFA를 평가한 뒤 <b>세션 쿠키</b>를 설정합니다. 이후 Leg 2가 이 세션을 재사용합니다.'},
+  {t:'SAML Response (자동 POST 폼)',title:'Entra가 서명된 SAML 어설션 발급'},
+  {t:'POST /saml/acs',title:'어설션이 Idira ACS에 전달',desc:'Idira는 서명과 대상을 검증하고 사용자를 매핑하며, <code>ai_agent_7f3c…</code>가 이 사용자를 대신해 동작하는 등록된 에이전트인지 확인합니다.'},
+  {t:'302 코드 → GW 콜백',title:'Idira가 인가 코드 반환'},
+  {t:'GET /api/v2/oauth/idira/callback',title:'코드가 Gateway에 도착'},
+  {t:'코드 교환 (백 채널)',title:'Gateway가 백엔드에서 코드 교환'},
+  {t:'Idira 토큰 (사용자 + 에이전트)',title:'Idira 토큰: 사용자 + 에이전트, Gateway에 보관',desc:'이것이 on-behalf-of 바인딩입니다: <b>alice</b>가 <b>AI Agent</b>를 통해 동작합니다. Gateway가 캐시하고 갱신하며, 에이전트는 이 토큰을 받지 않습니다.'},
+  {t:'정책 사전 검사 · 공유 워크스페이스',title:'Gateway가 이 조합의 접근 범위 평가',desc:'<ul><li><b>사용자</b>, <b>에이전트</b>(Workspace Access), <b>MCP 서버</b>가 공유하는 워크스페이스 → Finance-AI</li><li>AIS 정책이 alice + AI Agent 허용</li></ul>'},
+  {t:'동의 페이지',title:'동의 페이지',desc:'공유 워크스페이스와 요청된 scope(예: <code>mcp:servers:read …</code>)만 표시됩니다.'},
+  {t:'승인',title:'사용자 승인'},
+  {t:'302 → Entra /authorize (MCP scope)',title:'Gateway가 Entra의 OAuth 클라이언트로 Leg 2 시작',desc:'Leg 2는 같은 브라우저 흐름 안에서, 동의 이후 에이전트가 코드를 받기 전에 진행됩니다.',note:'Entra를 MCP 권한 부여 서버로 쓰는 구성은 <b>검증되지 않았습니다</b>. QA 데모는 Keycloak을 사용했습니다. Entra v2는 RFC 8707 <code>resource</code> 파라미터가 아니라 scope 접두사로 API를 식별합니다. Gateway가 이 요청을 어떻게 구성하는지 확인하세요.'},
+  {t:'기존 세션 → SSO',title:'조용한 SSO — 비밀번호도 MFA도 없음',desc:'Leg 1의 Entra 세션 쿠키를 재사용하므로 두 번째 로그인이 없습니다. <code>mcp.tools</code>에 관리자 동의가 없을 때만 동의 화면이 나타납니다.'},
+  {t:'302 코드 → GW',title:'Entra가 Gateway용 코드 반환'},
+  {t:'GET /oauth/callback',title:'코드가 Gateway에 도착'},
+  {t:'POST /token (코드 + client secret)',title:'Gateway가 사전 등록 클라이언트로 코드 교환'},
+  {t:'MCP access + refresh 토큰',title:'MCP 토큰을 (사용자, 서버) 단위로 Gateway 볼트에 저장',desc:'Gateway는 (alice, mcp-server) 단위로 access/refresh 토큰을 보관합니다. 에이전트는 이를 볼 수 없습니다.'},
+  {t:'302 → localhost/callback?code',title:'Gateway가 마침내 에이전트의 코드 발급'},
+  {t:'코드 전달',title:'에이전트가 인가 코드 수신'},
+  {t:'POST /token (코드 + verifier + secret)',title:'에이전트가 코드 교환: client_secret은 여기서 한 번만 사용',desc:'client_secret이 사용되는 유일한 곳이며, 도구 호출에는 절대 전송되지 않습니다. 사용자 로그인 없이는 클라이언트 자격 증명만으로 아무것도 할 수 없습니다(GA1에는 client-credentials 그랜트 없음).'},
+  {t:'GW 액세스 토큰',title:'에이전트가 Gateway 자체 발급 토큰을 받음',desc:'토큰 두 개, 대상 두 개: Idira 토큰은 Gateway에 남고, 에이전트는 Gateway에서만 유효한 Gateway 발급 토큰을 가집니다.'},
+  {t:'tools/call search_mail',title:'에이전트가 Gateway를 통해 도구 호출'},
+  {t:'검증 · 정책 ALLOW · 헤더 교체',title:'Gateway 데이터 플레인: 권한 확인 후 자격 증명 중개',desc:'GA1은 토큰 교환이 아니라 <b>자격 증명 중개</b>입니다. MCP 토큰은 별도의 Leg 2 로그인에서 온 것이며 에이전트 토큰에서 파생되지 않습니다.'},
+  {t:'tools/call + Bearer MCP 토큰',title:'Entra가 발급한 MCP 토큰으로 요청 전달'},
+  {t:'Entra JWT 검증',title:'MCP Server가 토큰 검증',desc:'서명(JWKS), <code>iss</code>, <code>aud</code> = MCP 앱, <code>scp ∋ mcp.tools</code>를 확인합니다. ID는 <b>alice</b>이고, 호출 클라이언트(<code>azp</code>)는 AI Gateway입니다.'},
+  {t:'OBO: jwt-bearer 그랜트',title:'Entra On-Behalf-Of: Graph 토큰으로 교환',desc:'MCP Server가 alice의 토큰을 제시하고 대상이 Microsoft Graph인 토큰을 요청합니다. 이것이 <b>SaaS에 대한 SSO</b>입니다: 사용자 상호작용 없이 사용자 ID가 그대로 전달됩니다.',note:'두 가지 다른 "OBO": Idira의 on-behalf-of(Leg 1)는 위임 <i>관계</i>이며 GA1에서는 토큰 교환이 없습니다. 여기서의 Entra OBO는 실제 토큰 교환으로, AIRS 밖에서 MCP Server가 수행합니다.'},
+  {t:'Graph 토큰 (alice)',title:'alice용 Graph 토큰 발급'},
+  {t:'GET /me/messages',title:'MCP Server가 alice로서 Microsoft Graph 호출'},
+  {t:'200 · alice의 메일만',title:'Graph가 alice 본인의 권한을 적용',desc:'실효 권한 = 위임 scope(Mail.Read) ∩ alice 본인의 권한. 심층 방어: Gateway 정책(에이전트 × 사용자 × 도구) ∩ 백엔드 권한(사용자).'},
+  {t:'도구 결과',title:'결과가 Gateway를 거쳐 반환'},
+  {t:'도구 결과 (기록됨)',title:'Gateway가 기록 후 결과 반환',desc:'Gateway는 사용자, 에이전트, 도구, 결정, 인수, 응답을 기록합니다. 워크스페이스 가드레일이 페이로드를 검사할 수 있습니다.'},
+  {t:'tools/call send_mail',title:'같은 에이전트가 허용되지 않은 도구 호출 시도'},
+  {t:'정책 → DENY',title:'AIS 정책 거부: 사용자 × 에이전트 × 도구',desc:'alice 본인은 메일을 보낼 수 있지만, 정책은 <code>send_mail</code>을 <b>AI Agent</b>에 허용하지 않습니다. 에이전트 ID가 결과를 바꿉니다. Entra와 Graph만으로는 불가능합니다. 그들의 토큰에는 에이전트 정보가 없기 때문입니다.'},
+  {t:'접근 거부',title:'접근 거부 응답 — 백엔드에는 도달하지 않음',desc:'MCP Server, Entra OBO, Microsoft Graph 모두 호출되지 않습니다. 이 시도는 decision = deny로 기록됩니다.'},
+  {t:'SCM → Agent Identity → 감사 로그',title:'SCM 감사 로그'},
+  {t:'Observability → 로그',title:'AI Gateway 관측성'},
+  {t:'에이전트 로그인 이벤트',title:'Idira 콘솔',desc:'에이전트 로그인 이벤트는 어떤 사용자가 언제 어떤 에이전트를 승인했는지 보여줍니다.'},
+  {t:'로그인 로그',title:'Entra ID 로그인 로그',desc:'<ul><li><b>대화형</b>: alice → Idira(SAML), MFA / 조건부 액세스 결과 포함</li><li><b>비대화형</b>: alice → AI Gateway – MCP client(Leg 2, 갱신)</li><li><b>비대화형</b>: alice → MCP Server API → Microsoft Graph(OBO)</li></ul>사용자(oid)와 시간 기준으로 SCM 및 Gateway 로그와 연계하세요.'} ],
+ takeaways:`<li><b>대화형 로그인은 한 번뿐.</b> 사용자는 Leg 1에서 Idira(SAML)를 통해 Entra에 한 번 로그인합니다. Leg 2와 Graph 접근은 Entra SSO와 OBO로 이를 재사용합니다.</li>
+<li><b>토큰 네 개, 대상 네 개, 어느 것도 자기 대상을 넘어 전달되지 않음:</b> GW 토큰(에이전트 → GW) · Idira 토큰(GW에 보관) · MCP 토큰(GW → MCP) · Graph 토큰(MCP → Graph).</li>
+<li><b>에이전트 ID는 Gateway에서 집행</b>됩니다(정책 + 감사). GA1에는 토큰 교환이 없으므로 다운스트림 토큰에는 에이전트가 아닌 사용자(+ Gateway / MCP 앱)가 담깁니다.</li>
+<li><b>거부는 백엔드 자격 증명을 쓰기 전에 일어납니다.</b> 에이전트는 Entra, MCP, Graph 자격 증명을 절대 보유하지 않습니다.</li>
+<li><b>PoC에서 검증할 사항:</b> Leg 2의 MCP 권한 부여 서버로서 Entra(scope vs. <code>resource</code>, 사전 등록 클라이언트), GW 토큰 형식과 수명.</li>`
+},
+};
+/* ---- PoC (Nov 6, 2026) corrections: overrides by step index ---- */
+const I18N_PATCH = {
+'zh-CN': {
+ src:{P:'PoC 已验证（11/6）'},
+ claims:{gw:'PoC（11/6）实测的 token 响应。GW token 是不透明 token，用户 + agent 的绑定保存在 Gateway 服务端。'},
+ sub:'Prisma AIRS Agent Identity Security + AI Gateway · GA1 能力 · 同一 Entra ID 租户作为 Idira（SAML）、MCP Server 和 Graph（OAuth/OIDC）的 IdP · GW / Leg 2 行为已在 PoC 中验证（11/6）',
+ take:'<li><b>PoC 已验证（11/6，Leg 2 授权服务器为 Keycloak）：</b>Leg 2 的时序、预注册 client、PRM + RFC 8414 路径插入式发现、<code>resource</code> + PKCE、按（用户, 服务器）复用 token、agent 级拒绝。<b>对接 Entra 时：</b>手动指定授权服务器端点，并把 Application ID URI 设为 MCP URL。</li>',
+ steps:{
+  2:{desc:'需要两个应用注册：<ul><li><b>MCP Server API</b>：暴露委托 scope <code>mcp.tools</code>。Application ID URI 设为 <b>MCP URL</b>，因为 Gateway 会发送 <code>resource=&lt;MCP URL&gt;</code>（PoC 已验证）。它拥有 Graph 委托权限，以及 OBO 用的自身凭据。</li><li><b>AI Gateway – MCP client</b>：机密客户端，重定向 URI 是 Gateway 固定的 upstream callback，允许申请 <code>mcp.tools</code>。</li></ul>'},
+  3:{desc:'按照 MCP 授权规范，服务器声明 Entra ID 为其授权服务器，并校验 Entra 签发的 JWT（issuer、audience、scope，通过 JWKS 校验签名）。PoC 证实 Gateway 会读取这个 PRM，并从 <code>scopes_supported</code> 中取申请的 scope。'},
+  4:{desc:'在 <b>MCP Registry</b> 中把 <b>Auth Type 设为 OAuth 2.1</b>（按用户授权；<i>不要</i>选 Client Credentials，那样 GW 会在没有用户的情况下自己拿 token）。在 <b>OAuth Metadata</b> 中填入 "AI Gateway – MCP client" 应用的<b>预注册</b> client。把服务器分配到工作区，并为每个 agent 配置 AIS 策略（agent × 用户 × 工具）。',
+     note:'PoC 已验证：<code>token_endpoint_auth_method</code> 默认是 <code>none</code>，机密客户端必须显式设置。GW 只通过 RFC 8414 <b>路径插入</b> URL 发现授权服务器，而 Entra 不提供这个 URL，所以要显式填写 Entra 的两个端点。新注册的 agent 在策略授权之前会被拒绝（"Access to this MCP server is denied by access policy"）。'},
+  6:{desc:'Agent Identity → Register。重定向 URL 做<b>精确匹配，包括端口和路径</b>（PoC：任何差异都会返回 <code>Invalid redirect_uri</code>）。云端 agent 用公网地址，本地 agent 用它实际使用的回环地址。例如 Codex 会在末尾追加 callback ID。'},
+  10:{desc:'agent 获得 Gateway 的 MCP 端点和自己的 client_id（以及 secret），永远拿不到 Entra、Idira 或 MCP Server 的凭据。',
+      note:'<b>不要</b>添加 <code>x-portkey-api-key</code> 或 API key 形式的 Bearer：带这些凭据的请求走 API key 认证，会完全跳过 OAuth / AIS（PoC 已验证）。GA1 不正式支持客户端侧 agent。'},
+  13:{desc:'agent 看到的授权服务器就是 Gateway 本身，Idira 和 Entra 都在它后面。它的元数据<b>只在 RFC 8414 路径插入 URL 上提供</b>，并声明 token 端点认证方式为 <code>none</code>（公开客户端 + PKCE）。'},
+  29:{desc:'Leg 2 在同一个浏览器流程中进行：用户同意之后、agent 拿到授权码之前。PoC 已验证（授权服务器为 Keycloak）：GW 读取 MCP 的 PRM，使用 PKCE，从 <code>scopes_supported</code> 取 scope，附带 <code>resource=&lt;MCP URL&gt;</code>，回调地址固定为 <code>/oauth/upstream-callback</code>。',
+      note:'Entra 相关细节仍属<b>推断</b>。Entra 没有 RFC 8414 路径插入元数据，所以端点要在 OAuth Metadata 中指定（步骤 0.5）。把 Application ID URI 设为 MCP URL，可以让 <code>resource</code> 和 <code>scope</code> 保持一致。如果需要 GW 刷新 token，scope 里加上 <code>offline_access</code>。'},
+  31:{t:'302 授权码 → GW upstream-callback'},
+  32:{t:'GET /oauth/upstream-callback'},
+  34:{desc:'Gateway 按（alice, mcp-server）保存 access token 和 refresh token，agent 永远看不到。PoC 已验证：<b>alice 的所有 agent 都复用这份 token</b>（第二个 agent 没有再次触发 Leg 2）。',
+      note:'PoC 已验证：如果之后上游刷新失败（例如授权服务器会话过期），工具调用会失败，GW <b>不会</b>提示重新授权。让 agent 退出 MCP 登录再重新登录，GW 会重新走一遍 Leg 2。'},
+  35:{t:'302 → 127.0.0.1/callback?code'},
+  37:{t:'POST /oauth/token（授权码 + verifier）', title:'agent 兑换授权码（PoC：client_id + PKCE，无需 secret）',
+      desc:'client_secret 从不随工具调用发送。PoC 中 Gateway 在<b>不带</b> secret 的情况下也接受了授权码：它的元数据声明认证方式为 <code>none</code>，由 PKCE 加精确的重定向 URI 把授权码绑定到 agent。',
+      note:'待问 PM：SCM 签发的 client_secret 是否应该在 Gateway 的 token 端点强制校验？'},
+  38:{desc:'两个 token，两个受众：Idira token 留在 Gateway；agent 持有的是 Gateway 签发、只在 Gateway 有效的 token。PoC 中这个 token 是<b>不透明 token</b>，不是 JWT。'},
+  50:{desc:'alice 本人可以发邮件，但策略没有把 <code>send_mail</code> 授予 <b>AI Agent</b>。agent 身份改变了结果。仅靠 Entra 和 Graph 做不到这一点，因为它们的 token 中不标识 agent。PoC 验证了 agent 级的情况：同一个用户、同一个 MCP Server，一个没有策略的新 agent 被拒绝。'},
+ }},
+'zh-TW': {
+ src:{P:'PoC 已驗證（11/6）'},
+ claims:{gw:'PoC（11/6）實測的 token 回應。GW token 是不透明 token，使用者 + agent 的綁定保存在 Gateway 伺服器端。'},
+ sub:'Prisma AIRS Agent Identity Security + AI Gateway · GA1 功能 · 同一個 Entra ID 租用戶作為 Idira（SAML）、MCP Server 與 Graph（OAuth/OIDC）的 IdP · GW / Leg 2 行為已於 PoC 中驗證（11/6）',
+ take:'<li><b>PoC 已驗證（11/6，Leg 2 授權伺服器為 Keycloak）：</b>Leg 2 的時序、預先註冊 client、PRM + RFC 8414 路徑插入式探索、<code>resource</code> + PKCE、依（使用者, 伺服器）重複使用 token、agent 層級拒絕。<b>對接 Entra 時：</b>手動指定授權伺服器端點，並把 Application ID URI 設為 MCP URL。</li>',
+ steps:{
+  2:{desc:'需要兩個應用程式註冊：<ul><li><b>MCP Server API</b>：公開委派 scope <code>mcp.tools</code>。Application ID URI 設為 <b>MCP URL</b>，因為 Gateway 會傳送 <code>resource=&lt;MCP URL&gt;</code>（PoC 已驗證）。它擁有 Graph 委派權限，以及 OBO 用的自身憑證。</li><li><b>AI Gateway – MCP client</b>：機密用戶端，重新導向 URI 是 Gateway 固定的 upstream callback，允許申請 <code>mcp.tools</code>。</li></ul>'},
+  3:{desc:'依照 MCP 授權規格，伺服器宣告 Entra ID 為其授權伺服器，並驗證 Entra 簽發的 JWT（issuer、audience、scope，透過 JWKS 驗證簽章）。PoC 證實 Gateway 會讀取這個 PRM，並從 <code>scopes_supported</code> 取得申請的 scope。'},
+  4:{desc:'在 <b>MCP Registry</b> 中把 <b>Auth Type 設為 OAuth 2.1</b>（依使用者授權；<i>不要</i>選 Client Credentials，那樣 GW 會在沒有使用者的情況下自行取得 token）。在 <b>OAuth Metadata</b> 中填入 "AI Gateway – MCP client" 應用程式的<b>預先註冊</b> client。把伺服器指派到工作區，並為每個 agent 設定 AIS 原則（agent × 使用者 × 工具）。',
+     note:'PoC 已驗證：<code>token_endpoint_auth_method</code> 預設為 <code>none</code>，機密用戶端必須明確設定。GW 只透過 RFC 8414 <b>路徑插入</b> URL 探索授權伺服器，而 Entra 不提供這個 URL，所以要明確填寫 Entra 的兩個端點。新註冊的 agent 在原則授權之前會被拒絕（"Access to this MCP server is denied by access policy"）。'},
+  6:{desc:'Agent Identity → Register。重新導向 URL 採<b>精確比對，包括連接埠與路徑</b>（PoC：任何差異都會傳回 <code>Invalid redirect_uri</code>）。雲端 agent 用公開位址，本機 agent 用它實際使用的回送位址。例如 Codex 會在末尾附加 callback ID。'},
+  10:{desc:'agent 取得 Gateway 的 MCP 端點和自己的 client_id（以及 secret），永遠拿不到 Entra、Idira 或 MCP Server 的憑證。',
+      note:'<b>不要</b>加入 <code>x-portkey-api-key</code> 或 API key 形式的 Bearer：帶這些憑證的請求走 API key 驗證，會完全跳過 OAuth / AIS（PoC 已驗證）。GA1 不正式支援用戶端型 agent。'},
+  13:{desc:'agent 看到的授權伺服器就是 Gateway 本身，Idira 與 Entra 都在它後面。它的中繼資料<b>只在 RFC 8414 路徑插入 URL 上提供</b>，並宣告 token 端點驗證方式為 <code>none</code>（公開用戶端 + PKCE）。'},
+  29:{desc:'Leg 2 在同一個瀏覽器流程中進行：使用者同意之後、agent 取得授權碼之前。PoC 已驗證（授權伺服器為 Keycloak）：GW 讀取 MCP 的 PRM，使用 PKCE，從 <code>scopes_supported</code> 取得 scope，附帶 <code>resource=&lt;MCP URL&gt;</code>，回呼位址固定為 <code>/oauth/upstream-callback</code>。',
+      note:'Entra 相關細節仍屬<b>推論</b>。Entra 沒有 RFC 8414 路徑插入中繼資料，所以端點要在 OAuth Metadata 中指定（步驟 0.5）。把 Application ID URI 設為 MCP URL，可以讓 <code>resource</code> 與 <code>scope</code> 保持一致。如果需要 GW 更新 token，scope 裡加上 <code>offline_access</code>。'},
+  31:{t:'302 授權碼 → GW upstream-callback'},
+  32:{t:'GET /oauth/upstream-callback'},
+  34:{desc:'Gateway 依（alice, mcp-server）保存 access token 與 refresh token，agent 永遠看不到。PoC 已驗證：<b>alice 的所有 agent 都重複使用這份 token</b>（第二個 agent 沒有再次觸發 Leg 2）。',
+      note:'PoC 已驗證：如果之後上游更新失敗（例如授權伺服器工作階段過期），工具呼叫會失敗，GW <b>不會</b>提示重新授權。讓 agent 登出 MCP 再重新登入，GW 會重新走一遍 Leg 2。'},
+  35:{t:'302 → 127.0.0.1/callback?code'},
+  37:{t:'POST /oauth/token（授權碼 + verifier）', title:'agent 兌換授權碼（PoC：client_id + PKCE，不需 secret）',
+      desc:'client_secret 從不隨工具呼叫傳送。PoC 中 Gateway 在<b>不帶</b> secret 的情況下也接受了授權碼：它的中繼資料宣告驗證方式為 <code>none</code>，由 PKCE 加上精確的重新導向 URI 把授權碼綁定到 agent。',
+      note:'待詢問 PM：SCM 簽發的 client_secret 是否應該在 Gateway 的 token 端點強制驗證？'},
+  38:{desc:'兩個 token，兩個對象：Idira token 留在 Gateway；agent 持有的是 Gateway 簽發、只在 Gateway 有效的 token。PoC 中這個 token 是<b>不透明 token</b>，不是 JWT。'},
+  50:{desc:'alice 本人可以寄信，但原則沒有把 <code>send_mail</code> 授與 <b>AI Agent</b>。agent 身分改變了結果。僅靠 Entra 與 Graph 做不到這一點，因為它們的 token 中不識別 agent。PoC 驗證了 agent 層級的情況：同一個使用者、同一個 MCP Server，一個沒有原則的新 agent 被拒絕。'},
+ }},
+'ko': {
+ src:{P:'PoC 검증됨 (11/6)'},
+ claims:{gw:'PoC(11/6)에서 관찰한 토큰 응답입니다. GW 토큰은 불투명(opaque) 토큰이며, 사용자 + 에이전트 바인딩은 Gateway 서버 측에 보관됩니다.'},
+ sub:'Prisma AIRS Agent Identity Security + AI Gateway · GA1 기능 · 단일 Entra ID 테넌트를 Idira(SAML), MCP Server, Graph(OAuth/OIDC)의 IdP로 사용 · GW / Leg 2 동작은 PoC에서 검증 (11/6)',
+ take:'<li><b>PoC에서 검증됨 (11/6, Leg 2 권한 부여 서버는 Keycloak):</b> Leg 2 순서, 사전 등록 클라이언트, PRM + RFC 8414 경로 삽입 방식 디스커버리, <code>resource</code> + PKCE, (사용자, 서버) 단위 토큰 재사용, 에이전트 단위 거부. <b>Entra 연동 시:</b> 권한 부여 서버 엔드포인트를 직접 지정하고, Application ID URI를 MCP URL로 설정합니다.</li>',
+ steps:{
+  2:{desc:'앱 등록은 두 개입니다:<ul><li><b>MCP Server API</b>: 위임 scope <code>mcp.tools</code>를 노출합니다. Gateway가 <code>resource=&lt;MCP URL&gt;</code>을 보내므로(PoC 검증) Application ID URI는 <b>MCP URL</b>로 설정합니다. Graph 위임 권한과 OBO용 자체 자격 증명을 가집니다.</li><li><b>AI Gateway – MCP client</b>: 기밀 클라이언트이며, 리디렉션 URI는 Gateway의 고정 upstream callback이고, <code>mcp.tools</code>를 요청할 수 있습니다.</li></ul>'},
+  3:{desc:'MCP 권한 부여 사양에 따라 서버는 Entra ID를 권한 부여 서버로 알리고, Entra가 발급한 JWT(issuer, audience, scope, JWKS 서명)를 검증합니다. PoC에서 Gateway가 이 PRM을 읽고 <code>scopes_supported</code>에서 요청 scope를 가져오는 것을 확인했습니다.'},
+  4:{desc:'<b>MCP Registry</b>에서 <b>Auth Type = OAuth 2.1</b>(사용자별)로 설정합니다. Client Credentials를 선택하면 GW가 사용자 없이 직접 토큰을 받으므로 <i>선택하지 마세요</i>. <b>OAuth Metadata</b>에는 "AI Gateway – MCP client" 앱의 <b>사전 등록</b> 클라이언트를 입력합니다. 서버를 워크스페이스에 할당하고, 각 에이전트에 AIS 정책(에이전트 × 사용자 × 도구)을 부여합니다.',
+     note:'PoC 검증: <code>token_endpoint_auth_method</code>의 기본값은 <code>none</code>이므로 기밀 클라이언트는 반드시 지정해야 합니다. GW는 RFC 8414 <b>경로 삽입</b> URL로만 권한 부여 서버를 찾는데, Entra는 이 URL을 제공하지 않으므로 Entra의 두 엔드포인트를 명시적으로 입력합니다. 새로 등록한 에이전트는 정책이 부여되기 전까지 거부됩니다("Access to this MCP server is denied by access policy").'},
+  6:{desc:'Agent Identity → Register. 리디렉션 URL은 <b>포트와 경로까지 정확히 일치</b>해야 합니다(PoC: 조금이라도 다르면 <code>Invalid redirect_uri</code>). 클라우드 에이전트는 공개 엔드포인트, 로컬 에이전트는 실제로 사용하는 루프백 URL을 씁니다. 예를 들어 Codex는 callback ID를 덧붙입니다.'},
+  10:{desc:'에이전트는 Gateway MCP 엔드포인트와 자신의 client_id(및 secret)만 받습니다. Entra, Idira, MCP Server의 자격 증명은 절대 받지 않습니다.',
+      note:'<code>x-portkey-api-key</code>나 API 키 형태의 Bearer를 <b>추가하지 마세요</b>. 이런 요청은 API 키 인증으로 처리되어 OAuth / AIS를 완전히 건너뜁니다(PoC 검증). GA1은 클라이언트형 에이전트를 공식 지원하지 않습니다.'},
+  13:{desc:'에이전트가 보는 권한 부여 서버는 Gateway 자체이며, Idira와 Entra는 그 뒤에 있습니다. 메타데이터는 <b>RFC 8414 경로 삽입 URL에서만</b> 제공되며, 토큰 엔드포인트 인증 방식을 <code>none</code>(공개 클라이언트 + PKCE)으로 알립니다.'},
+  29:{desc:'Leg 2는 같은 브라우저 흐름 안에서, 동의 이후 에이전트가 코드를 받기 전에 진행됩니다. PoC 검증(권한 부여 서버는 Keycloak): GW는 MCP의 PRM을 읽고, PKCE를 사용하며, <code>scopes_supported</code>에서 scope를 가져오고, <code>resource=&lt;MCP URL&gt;</code>을 붙이며, 고정된 <code>/oauth/upstream-callback</code>으로 돌아옵니다.',
+      note:'Entra 관련 세부 사항은 아직 <b>추정</b>입니다. Entra에는 RFC 8414 경로 삽입 메타데이터가 없으므로 엔드포인트를 OAuth Metadata에 지정합니다(0.5단계). Application ID URI를 MCP URL로 맞추면 <code>resource</code>와 <code>scope</code>가 일치합니다. GW가 토큰을 갱신해야 한다면 scope에 <code>offline_access</code>를 추가하세요.'},
+  31:{t:'302 코드 → GW upstream-callback'},
+  32:{t:'GET /oauth/upstream-callback'},
+  34:{desc:'Gateway는 (alice, mcp-server) 단위로 access/refresh 토큰을 보관하며, 에이전트는 이를 볼 수 없습니다. PoC 검증: <b>alice의 모든 에이전트가 이 토큰을 재사용</b>합니다(두 번째 에이전트는 Leg 2를 다시 실행하지 않았음).',
+      note:'PoC 검증: 이후 업스트림 갱신이 실패하면(예: 권한 부여 서버 세션 만료) 도구 호출이 실패하고, GW는 재인증을 요청하지 <b>않습니다</b>. 에이전트가 MCP에서 로그아웃 후 다시 로그인하면 GW가 Leg 2를 다시 실행합니다.'},
+  35:{t:'302 → 127.0.0.1/callback?code'},
+  37:{t:'POST /oauth/token (코드 + verifier)', title:'에이전트가 코드 교환 (PoC: client_id + PKCE, secret 불필요)',
+      desc:'client_secret은 도구 호출에 절대 전송되지 않습니다. PoC에서 Gateway는 secret <b>없이도</b> 코드를 받아들였습니다. 메타데이터가 인증 방식 <code>none</code>을 알리므로, PKCE와 정확한 리디렉션 URI가 코드를 에이전트에 묶습니다.',
+      note:'PM 확인 필요: SCM이 발급한 client_secret을 Gateway 토큰 엔드포인트에서 강제해야 하는가?'},
+  38:{desc:'토큰 두 개, 대상 두 개: Idira 토큰은 Gateway에 남고, 에이전트는 Gateway에서만 유효한 Gateway 발급 토큰을 가집니다. PoC에서 이 토큰은 JWT가 아닌 <b>불투명 토큰</b>이었습니다.'},
+  50:{desc:'alice 본인은 메일을 보낼 수 있지만, 정책은 <code>send_mail</code>을 <b>AI Agent</b>에 허용하지 않습니다. 에이전트 ID가 결과를 바꿉니다. Entra와 Graph만으로는 불가능합니다. 그들의 토큰에는 에이전트 정보가 없기 때문입니다. PoC는 에이전트 단위 사례를 검증했습니다: 같은 사용자, 같은 MCP Server라도 정책이 없는 새 에이전트는 거부되었습니다.'},
+ }},
+};
+for (const [lg, P] of Object.entries(I18N_PATCH)) {
+  const L = I18N[lg]; if (!L) continue;
+  Object.assign(L.src, P.src); Object.assign(L.claims, P.claims); L.ui.sub = P.sub;
+  L.takeaways = L.takeaways.replace(/<li><b>[^<]*PoC[^<]*<\/b>[\s\S]*?<\/li>\s*$/, '') .replace(/\s*$/, '') + '\n' + P.take;
+  for (const [i, o] of Object.entries(P.steps)) Object.assign(L.steps[+i], o);
+}
+</script>
+<script>
+/* ------------------------------------------------------------------ data */
+const LANES = [
+  {id:'user',  ab:'US', name:'User · Browser',  sub:'alice@contoso.com / admin', color:'#cbd5e1'},
+  {id:'agent', ab:'AG', name:'AI Agent',        sub:'OAuth client',          color:'#a78bfa'},
+  {id:'scm',   ab:'SC', name:'SCM / SAI',       sub:'Strata Cloud Manager',  color:'#f59e0b'},
+  {id:'idira', ab:'ID', name:'Idira',           sub:'Agent identity',        color:'#2dd4bf'},
+  {id:'gw',    ab:'GW', name:'AI Gateway',      sub:'Prisma AIRS',           color:'#fa582d'},
+  {id:'entra', ab:'EN', name:'Entra ID',        sub:'IdP · SAML + OAuth',    color:'#3b82f6'},
+  {id:'mcp',   ab:'MC', name:'MCP Server',      sub:'mcp.contoso.com',       color:'#34d399'},
+  {id:'graph', ab:'MG', name:'Microsoft Graph', sub:'SaaS API',              color:'#f472b6'},
+];
+const LI = Object.fromEntries(LANES.map((l,i)=>[l.id,i]));
+
+const TOKENS = {
+  session:  {label:'Entra session', color:'#3b82f6'},
+  cred:     {label:'client_id / secret', color:'#f59e0b'},
+  pkce:     {label:'PKCE verifier', color:'#a78bfa'},
+  saml:     {label:'SAML assertion', color:'#c084fc'},
+  idira:    {label:'Idira token', color:'#2dd4bf'},
+  mcp:      {label:'MCP token (Entra)', color:'#34d399'},
+  gw:       {label:'GW token', color:'#fa582d'},
+  graph:    {label:'Graph token', color:'#f472b6'},
+};
+
+const KINDS = {
+  front:  {c:'#94a3b8', dash:'6 5', name:'Front-channel (browser redirect)'},
+  back:   {c:'#cbd5e1', dash:'',    name:'Back-channel HTTPS'},
+  saml:   {c:'#c084fc', dash:'6 5', name:'SAML 2.0 (Idira ↔ Entra)'},
+  data:   {c:'#34d399', dash:'',    name:'MCP data path'},
+  obo:    {c:'#fbbf24', dash:'',    name:'Entra OBO token exchange'},
+  deny:   {c:'#ef4444', dash:'',    name:'Denied'},
+  config: {c:'#64748b', dash:'2 4', name:'Admin config'},
+};
+
+const SRC = {
+  V:{t:'Verified · demo / deep dive', c:'#22c55e'},
+  G:{t:'GA1 docs', c:'#60a5fa'},
+  E:{t:'Entra / OAuth standard', c:'#818cf8'},
+  I:{t:'Inferred · validate in PoC', c:'#f59e0b'},
+  X:{t:'Illustrative values', c:'#94a3b8'},
+  P:{t:'Verified in PoC (Nov 6)', c:'#14b8a6'},
+};
+
+const CLAIMS = {
+  idira:{tok:'idira', obj:{
+    iss:'https://<idira-tenant>.id.cyberark.cloud/…', sub:'alice@contoso.com',
+    client_id:'ai_agent_7f3c2a9e…', agent_id:'7f3c2a9e-…', aud:'<AI Gateway>', scope:'mcp:servers:read …'},
+    note:'Format not documented — fields are illustrative. Documented: it represents user + agent and never leaves the Gateway.'},
+  mcp:{tok:'mcp', obj:{
+    aud:'<mcp-server-app-id>', iss:'https://login.microsoftonline.com/<tid>/v2.0', tid:'<tid>',
+    oid:'<alice-oid>', preferred_username:'alice@contoso.com', azp:'<ai-gateway-app-id>', scp:'mcp.tools', ver:'2.0'},
+    note:'azp = the AI Gateway\'s Entra app. There is no agent claim: the MCP Server sees user + Gateway.'},
+  gw:{tok:'gw', obj:{
+    access_token:'pat_VN4m…  (opaque — not a JWT)', token_type:'Bearer', expires_in:3600,
+    refresh_token:'prt_Hdr5…', scope:'mcp:servers:read mcp:tools:list mcp:tools:call'},
+    note:'Token response observed in the PoC (Nov 6). The GW token is opaque: user + agent binding lives server-side at the Gateway.'},
+  graph:{tok:'graph', obj:{
+    aud:'https://graph.microsoft.com', iss:'https://sts.windows.net/<tid>/', appid:'<mcp-server-app-id>',
+    upn:'alice@contoso.com', oid:'<alice-oid>', scp:'Mail.Read User.Read', ver:'1.0'},
+    note:'Same user (oid), new audience (Graph), new client (appid = MCP Server). Graph returns only what alice herself can access.'},
+};
+
+const PHASES = [
+ {k:'0', name:'Admin setup', desc:'One-time admin configuration. Idira, the MCP Server and Microsoft Graph all trust the same Entra ID tenant (contoso.onmicrosoft.com).'},
+ {k:'1', name:'Agent registration', desc:'Onboarding in Strata Cloud Manager gives the agent a persistent identity in Idira plus OAuth client credentials.'},
+ {k:'2', name:'Discovery', desc:'MCP authorization discovery: the agent learns that the AI Gateway is its authorization server. It never talks to Idira or Entra directly.'},
+ {k:'3', name:'Leg 1 · Idira OBO sign-in', desc:'OAuth 2.1 authorization code + PKCE. The Gateway brokers the agent\'s request to Idira; Idira authenticates the user against Entra ID via SAML. Result: an Idira token that binds user + agent (on-behalf-of).'},
+ {k:'4', name:'Gateway authorization', desc:'The Gateway works out what this user + agent pair may reach, and the user consents.'},
+ {k:'5', name:'Leg 2 · MCP sign-in', desc:'Runs inside the same sign-in, after consent and before the agent gets its code. The Gateway is Entra\'s OAuth client for the MCP Server. The Entra session from Leg 1 makes it silent (SSO).'},
+ {k:'6', name:'Agent token', desc:'The agent completes its own OAuth flow and receives a token issued by the Gateway — not by Idira, not by Entra.'},
+ {k:'7', name:'Tool call → Graph', desc:'Every tool call passes the Gateway: policy check, then header replacement (GA1 credential brokering). The MCP Server uses Entra OBO to call Microsoft Graph as the user — no further sign-in.'},
+ {k:'8', name:'Denied call', deny:true, desc:'Same agent, same user, a tool the policy does not allow. The Gateway blocks it and the backend is never reached.'},
+ {k:'9', name:'Audit trail', desc:'Each hop leaves evidence: which user, which agent, which tool, which decision.'},
+];
+
+// step shorthand: from, to (same = self action), label, kind, extra
+const S = (p,from,to,t,kind,o={}) => ({p,from,to,t,kind,...o});
+
+const STEPS = [
+/* ---------- P0 admin setup ---------- */
+S(0,'idira','entra','SAML trust (metadata exchange)','config',{title:'Federate Idira with Entra ID (SAML 2.0)',src:['G','X'],
+ desc:'In the <b>Idira console</b>, the admin connects Entra ID as the SAML IdP. Entra gets an Enterprise Application for Idira (SP entity ID + ACS URL); Idira imports Entra\'s federation metadata (SSO URL, signing certificate).',
+ http:`Entra ID → Enterprise app "Idira" (SAML)
+  Identifier (Entity ID): <idira-sp-entity-id>
+  Reply URL (ACS):        https://<idira-tenant>/…/saml/acs
+  NameID:                 user.userprincipalname
+Idira console → Setup → Deployment → Identity Sources → External Identity Providers
+  Import Entra federation metadata (SSO URL, signing cert)
+  Authentication tab: federated UserPrincipalName → Idira Cloud Directory (Name)`}),
+S(0,'entra','scm','CIE directory sync (users + groups)','config',{title:'Sync Entra users & groups to the AI Gateway via Cloud Identity Engine',src:['G','X'],
+ desc:'Entra ID is connected a <b>second time</b>, this time to Cloud Identity Engine (CIE), so that AIS policies can reference users and groups (e.g. <i>Finance users</i>). Configure it in SCM: <b>AI Security → AI Gateway → Admin Settings → Authentication → Configure in CIE</b>. CIE syncs every 5 minutes.',
+ http:`Cloud Identity Engine → Directories → Add New Directory → Microsoft Entra ID
+  Sync:            users + groups, every 5 min
+SCM → AI Security → AI Gateway → Admin Settings → Authentication
+  Configure in CIE → select the Entra directory
+  User attribute:  userPrincipalName   (must match the Idira mapping)`,
+ note:'Idira and CIE never talk to each other. Both connect to the same Entra tenant and must use the <b>same user attribute</b> (userPrincipalName), otherwise the Gateway cannot match the user in the token to the user named in a policy. A new user can take up to 5 minutes to become resolvable.'}),
+S(0,'entra','entra','App registrations: MCP API + GW client','config',{title:'Register the MCP Server and the Gateway in Entra ID',src:['E','P'],
+ desc:'There are two app registrations:<ul><li><b>MCP Server API</b> exposes the delegated scope <code>mcp.tools</code>. Its Application ID URI is the <b>MCP URL</b>, because the Gateway sends <code>resource=&lt;MCP URL&gt;</code> (verified in the PoC). It holds delegated Graph permissions plus its own credential for OBO.</li><li><b>AI Gateway – MCP client</b> is a confidential client. Its redirect URI is the Gateway\'s fixed upstream callback, and it may request <code>mcp.tools</code>.</li></ul>',
+ http:`App "MCP Server API"
+  Application ID URI:  https://mcp.contoso.com      (verified domain; = MCP resource URL)
+  Exposed scope:       mcp.tools (delegated)
+  API permissions:     Microsoft Graph → User.Read, Mail.Read (delegated)
+  Credential:          client secret / certificate (used for OBO)
+App "AI Gateway – MCP client"
+  Type:                confidential (web)
+  Redirect URI:        https://<gw-host>/oauth/upstream-callback   (fixed by the GW — verified)
+  API permissions:     https://mcp.contoso.com/mcp.tools (delegated)`,
+ note:'Grant <b>admin consent</b> for the MCP Server\'s Graph permissions. OBO cannot show a consent prompt, so without consent it fails with <code>consent_required</code>.'}),
+S(0,'mcp','mcp','Publish PRM · trust Entra tokens','config',{title:'MCP Server: protected-resource metadata + token validation',src:['E','P'],
+ desc:'Per the MCP authorization spec, the server advertises Entra ID as its authorization server and validates Entra-issued JWTs (issuer, audience, scope, signature via JWKS). The PoC confirmed that the Gateway reads this PRM and takes the requested scope from <code>scopes_supported</code>.',
+ http:`GET https://mcp.contoso.com/.well-known/oauth-protected-resource/mcp
+{ "resource": "https://mcp.contoso.com/mcp",
+  "authorization_servers": ["https://login.microsoftonline.com/<tid>/v2.0"],
+  "scopes_supported": ["https://mcp.contoso.com/mcp.tools"] }
+
+Validate: iss = …/<tid>/v2.0 · aud = <mcp-server-app-id> · scp ∋ mcp.tools`}),
+S(0,'user','scm','MCP Registry + AIS policy','config',{title:'Register the MCP Server in the AI Gateway (SCM)',src:['G','P','X'],
+ desc:'In <b>MCP Registry</b>, set <b>Auth Type = OAuth 2.1</b> (per-user; <i>not</i> Client Credentials, which makes the GW fetch a token without a user). In <b>OAuth Metadata</b>, enter the <b>pre-registered</b> client of the "AI Gateway – MCP client" app. Assign the server to a workspace and grant each agent an AIS policy (agent × user × tool).',
+ http:`MCP Registry → add server
+  URL:        https://mcp.contoso.com/mcp
+  Auth Type:  OAuth 2.1
+  OAuth Metadata (plain JSON, no outer "oauth_metadata" key):
+  { "client_id": "<ai-gateway-app-id>",
+    "client_secret": "•••",
+    "token_endpoint_auth_method": "client_secret_basic",
+    "authorization_endpoint": "https://login.microsoftonline.com/<tid>/oauth2/v2.0/authorize",
+    "token_endpoint": "https://login.microsoftonline.com/<tid>/oauth2/v2.0/token" }
+  Workspace:  Finance-AI
+AIS policy
+  AI Agent × Finance users × {search_mail, get_profile}  → allow
+  AI Agent × *            × send_mail                    → not granted`,
+ note:'Verified in the PoC: <code>token_endpoint_auth_method</code> defaults to <code>none</code>, so set it for a confidential client. The GW discovers the AS only via the RFC 8414 <b>path-insertion</b> URL, which Entra does not serve, so set the two Entra endpoints explicitly. A newly registered agent is denied ("Access to this MCP server is denied by access policy") until a policy grants it.'}),
+S(0,'scm','gw','Push config to data plane','config',{title:'Configuration reaches the Gateway data plane',src:['G'],
+ desc:'SCM is the single management plane for agents, MCP servers and policies. The Gateway data plane (SaaS or customer-run hybrid) enforces them.'}),
+
+/* ---------- P1 agent registration ---------- */
+S(1,'user','scm','Register agent','back',{title:'Admin registers the AI Agent in SCM',src:['G','P','X'],
+ desc:'Agent Identity → Register. The redirect URL is matched <b>exactly, including port and path</b> (PoC: any difference returns <code>Invalid redirect_uri</code>). Use a public endpoint for cloud agents, or the loopback URL the local agent really uses. Codex, for example, appends a callback ID.',
+ http:`Agent Name:        AI Agent            (unique per tenant)
+Framework:         <framework>
+Redirect URL:      http://127.0.0.1:8765/callback/w0T0VlrC4q2n   (Codex: callback ID appended)
+Owner Email:       alice@contoso.com   (autocomplete: Idira → Entra)
+Workspace Access:  Finance-AI`}),
+S(1,'scm','idira','Create agent + OAuth client','back',{title:'SAI creates the agent identity in Idira',src:['G'],
+ desc:'On Register, SCM calls SAI back-to-back. SAI creates the agent in Idira and generates its OAuth client (<code>ai_agent_&lt;uuid&gt;</code>, which appears in the authorize URL).'}),
+S(1,'idira','scm','Agent ID · client_id · secret','back',{title:'Identity and credentials returned',src:['G','X'],
+ http:`Agent ID:       7f3c2a9e-…          (persistent UUID)
+client_id:      ai_agent_7f3c2a9e…
+client_secret:  ••••••••••••`}),
+S(1,'scm','user','Secret shown once','back',{title:'client_secret is displayed once',src:['G'],
+ desc:'Store it in a secrets manager. If it is lost, delete and re-register the agent (there is no rotation in GA1).'}),
+S(1,'user','agent','Configure client creds + GW MCP URL','config',{title:'Configure the agent',src:['G','P'],give:[['agent','cred']],
+ desc:'The agent gets the Gateway MCP endpoint plus its client_id (and secret). It never gets Entra, Idira or MCP Server credentials.',
+ http:`# Codex (~/.codex/config.toml) — verified in the PoC
+[mcp_servers.ais]
+url = "https://<gw-host>/<server-slug>/mcp"
+[mcp_servers.ais.oauth]
+client_id = "<agent client_id>"
+# login with a fixed callback port (CLI):
+#   codex -c mcp_oauth_callback_port=8765 mcp login ais`,
+ note:'Do <b>not</b> add <code>x-portkey-api-key</code> or an API-key bearer: such requests use API-key auth and skip OAuth / AIS entirely (verified). Client-based agents are not officially supported in GA1.'}),
+/* ---------- P2 discovery ---------- */
+S(2,'agent','gw','POST /mcp (no token)','back',{title:'First MCP request without a token',src:['V','P'],
+ http:`POST /<server-slug>/mcp HTTP/1.1
+Host: <gw-host>
+Content-Type: application/json
+Accept: application/json, text/event-stream
+
+{"jsonrpc":"2.0","id":1,"method":"initialize", …}`}),
+S(2,'gw','agent','401 + WWW-Authenticate','back',{title:'Gateway challenges the agent',src:['V','P'],
+ http:`HTTP/2 401
+access-control-expose-headers: mcp-session-id,WWW-Authenticate
+www-authenticate: Bearer resource_metadata=
+  "https://<gw-host>/.well-known/oauth-protected-resource/<server-slug>/mcp"`}),
+S(2,'agent','gw','GET PRM + AS metadata','back',{title:'Agent discovers the Gateway\'s /authorize and /token',src:['P'],
+ desc:'The Gateway itself is the authorization server the agent sees; Idira and Entra stay behind it. Its metadata is served <b>only at the RFC 8414 path-insertion URL</b>, and it advertises token-endpoint auth method <code>none</code> (public client + PKCE).',
+ http:`GET /.well-known/oauth-protected-resource/<server-slug>/mcp
+→ { "resource": "https://<gw-host>/<server-slug>/mcp",
+    "authorization_servers": ["https://<gw-host>/<server-slug>/mcp"],
+    "scopes_supported": ["mcp:servers:read","mcp:tools:list","mcp:tools:call", …] }
+GET /.well-known/oauth-authorization-server/<server-slug>/mcp
+→ { "authorization_endpoint": "https://<gw-host>/oauth/<server-slug>/authorize",
+    "token_endpoint": "https://<gw-host>/oauth/token",
+    "token_endpoint_auth_methods_supported": ["none"],
+    "code_challenge_methods_supported": ["S256"] }`}),
+/* ---------- P3 Leg 1 ---------- */
+S(3,'agent','user','Open browser → GW /authorize','front',{title:'Agent starts OAuth 2.1 + PKCE',src:['P','X'],give:[['agent','pkce']],
+ desc:'The agent generates a PKCE verifier/challenge (S256) and opens the user\'s browser at the Gateway\'s authorize endpoint.',
+ http:`GET https://<gw-host>/oauth/<server-slug>/authorize
+  ?response_type=code
+  &client_id=<agent client_id>
+  &redirect_uri=http://127.0.0.1:8765/callback/w0T0VlrC4q2n
+  &code_challenge=SZiHfSnJN_vW…&code_challenge_method=S256
+  &scope=mcp:servers:read mcp:tools:list mcp:tools:call
+  &resource=https://<gw-host>/<server-slug>/mcp
+  &state=4sKMNwRdhFN…`}),
+S(3,'user','gw','GET /authorize','front',{title:'Browser reaches the Gateway',src:['G']}),
+S(3,'gw','user','302 → Idira /authorize','front',{title:'Gateway delegates authentication to Idira',src:['V','X'],
+ desc:'The Gateway acts as Idira\'s OAuth client and starts its own authorization code flow. Idira returns the code to the Gateway, not to the agent.',
+ http:`HTTP/1.1 302 Found
+Location: https://<idira-tenant>/…/authorize
+  ?client_id=<gw-client>&response_type=code
+  &redirect_uri=https://<gw-host>/api/v2/oauth/idira/callback
+  &state=…`}),
+S(3,'user','idira','GET Idira /authorize','front',{title:'Browser reaches Idira',src:['V']}),
+S(3,'idira','user','SAML AuthnRequest → Entra','saml',{title:'Idira (SAML SP) redirects to Entra ID (SAML IdP)',src:['E','X'],
+ http:`HTTP/1.1 302 Found
+Location: https://login.microsoftonline.com/<tid>/saml2
+  ?SAMLRequest=fZJNT8MwDIb…&RelayState=…`}),
+S(3,'user','entra','Sign-in + MFA','front',{title:'User authenticates at Entra ID — the only interactive sign-in',src:['E'],give:[['user','session']],
+ desc:'Entra evaluates Conditional Access and MFA, then sets its <b>session cookie</b>. Leg 2 reuses this session later.',
+ http:`Set-Cookie: ESTSAUTH=…; domain=login.microsoftonline.com; Secure; HttpOnly`}),
+S(3,'entra','user','SAML Response (auto-POST form)','saml',{title:'Entra issues a signed SAML assertion',src:['E']}),
+S(3,'user','idira','POST /saml/acs','saml',{title:'Assertion delivered to Idira\'s ACS',src:['E','X'],give:[['idira','saml']],
+ desc:'Idira validates the signature and audience, maps the user, and checks that <code>ai_agent_7f3c…</code> is a registered agent acting on behalf of this user.',
+ http:`POST https://<idira-tenant>/…/saml/acs
+SAMLResponse=PHNhbWxwOlJlc3BvbnNl…
+
+<saml:Assertion>
+  <saml:Issuer>https://sts.windows.net/<tid>/</saml:Issuer>
+  <saml:NameID>alice@contoso.com</saml:NameID>
+  <saml:Audience>idira-sp-entity-id</saml:Audience>
+  <saml:AuthnContextClassRef>…/multipleauthn</saml:AuthnContextClassRef>
+</saml:Assertion>`}),
+S(3,'idira','user','302 code → GW callback','front',{title:'Idira returns an authorization code',src:['V'],take:[['idira','saml']],
+ http:`HTTP/1.1 302 Found
+Location: https://<gw-host>/api/v2/oauth/idira/callback?code=…&state=…`}),
+S(3,'user','gw','GET /api/v2/oauth/idira/callback','front',{title:'Code lands at the Gateway',src:['V']}),
+S(3,'gw','idira','Redeem code (back-channel)','back',{title:'Gateway redeems the code back-to-back',src:['V','X'],
+ http:`POST https://<idira-tenant>/…/token
+grant_type=authorization_code&code=…
+&redirect_uri=https://<gw-host>/api/v2/oauth/idira/callback`}),
+S(3,'idira','gw','Idira token (user + agent)','back',{title:'Idira token: user + agent, kept at the Gateway',src:['V'],give:[['gw','idira']],claims:'idira',
+ desc:'This is the on-behalf-of binding: <b>alice</b>, acting through <b>AI Agent</b>. The Gateway caches and refreshes it. The agent never receives it.'}),
+
+/* ---------- P4 GW authorization ---------- */
+S(4,'gw','gw','Policy pre-check · shared workspaces','back',{title:'Gateway evaluates what this pair may access',src:['V'],
+ desc:'<ul><li>Workspaces shared by the <b>user</b>, the <b>agent</b> (Workspace Access) and the <b>MCP server</b> → Finance-AI</li><li>AIS policy allows alice + AI Agent</li></ul>'}),
+S(4,'gw','user','Consent page','front',{title:'Consent page',src:['V'],
+ desc:'It lists only the shared workspaces and the requested scopes (e.g. <code>mcp:servers:read …</code>).'}),
+S(4,'user','gw','Approve','front',{title:'User approves',src:['V']}),
+
+/* ---------- P5 Leg 2 ---------- */
+S(5,'gw','user','302 → Entra /authorize (MCP scope)','front',{title:'Gateway starts Leg 2 as Entra\'s OAuth client',src:['P','I','X'],
+ desc:'Leg 2 happens inside the same browser flow, after consent and before the agent gets its code. Verified in the PoC (Keycloak as the AS): the GW reads the MCP PRM, uses PKCE, takes the scope from <code>scopes_supported</code>, adds <code>resource=&lt;MCP URL&gt;</code>, and redirects back to its fixed <code>/oauth/upstream-callback</code>.',
+ http:`HTTP/1.1 302 Found
+Location: https://login.microsoftonline.com/<tid>/oauth2/v2.0/authorize
+  ?client_id=<ai-gateway-app-id>&response_type=code
+  &redirect_uri=https://<gw-host>/oauth/upstream-callback
+  &scope=https://mcp.contoso.com/mcp.tools
+  &resource=https://mcp.contoso.com/mcp
+  &code_challenge=…&code_challenge_method=S256&state=…`,
+ note:'Entra specifics are still <b>inferred</b>. Entra has no RFC 8414 path-insertion metadata, so the endpoints are set in OAuth Metadata (step 0.5). Making the Application ID URI equal to the MCP URL keeps <code>resource</code> and <code>scope</code> consistent. Add <code>offline_access</code> to the scope if the GW should refresh.'}),
+S(5,'user','entra','Existing session → SSO','front',{title:'Silent SSO — no password, no MFA',src:['E'],
+ desc:'The Entra session cookie from Leg 1 is reused, so there is no second login. A consent prompt appears only if admin consent for <code>mcp.tools</code> was not granted.'}),
+S(5,'entra','user','302 code → GW upstream-callback','front',{title:'Entra returns a code for the Gateway',src:['E','P']}),
+S(5,'user','gw','GET /oauth/upstream-callback','front',{title:'Code lands at the Gateway',src:['E','P']}),
+S(5,'gw','entra','POST /token (code + client secret)','back',{title:'Gateway redeems the code with its pre-registered client',src:['E','P','X'],
+ http:`POST https://login.microsoftonline.com/<tid>/oauth2/v2.0/token
+Authorization: Basic base64(<ai-gateway-app-id>:•••)     (client_secret_basic)
+grant_type=authorization_code
+&code=…&redirect_uri=https://<gw-host>/oauth/upstream-callback
+&code_verifier=…`}),
+S(5,'entra','gw','MCP access + refresh token','back',{title:'MCP token stored in the Gateway vault per (user, server)',src:['G','E','P'],give:[['gw','mcp']],claims:'mcp',
+ desc:'The Gateway keeps the access and refresh tokens per (alice, mcp-server). The agent never sees them. Verified in the PoC: <b>all of alice\'s agents reuse this token</b> (a second agent did not trigger Leg 2 again).',
+ http:`{ "token_type": "Bearer", "scope": "https://mcp.contoso.com/mcp.tools",
+  "expires_in": 3599, "access_token": "eyJ0eXAi…", "refresh_token": "0.AXoA…" }`,
+ note:'Verified: if the upstream refresh later fails (e.g. the AS session expired), tool calls fail and the GW does <b>not</b> prompt for re-authorization. Signing the agent out of the MCP server and back in makes the GW run Leg 2 again.'}),
+/* ---------- P6 agent token ---------- */
+S(6,'gw','user','302 → 127.0.0.1/callback?code','front',{title:'Gateway finally issues the agent\'s code',src:['G','P'],
+ http:`HTTP/1.1 302 Found
+Location: http://127.0.0.1:8765/callback/w0T0VlrC4q2n?code=…&state=4sKMNwRdhFN…`}),
+S(6,'user','agent','Deliver code','front',{title:'Agent receives its authorization code',src:['G']}),
+S(6,'agent','gw','POST /oauth/token (code + verifier)','back',{title:'Agent redeems the code (PoC: client_id + PKCE, no secret)',src:['P'],take:[['agent','pkce']],
+ desc:'The client_secret is never sent on tool calls. In the PoC the Gateway also accepted the code <b>without</b> the secret: its metadata advertises auth method <code>none</code>, so PKCE plus the exact redirect URI bind the code to the agent.',
+ http:`POST https://<gw-host>/oauth/token
+grant_type=authorization_code&code=…
+&redirect_uri=http://127.0.0.1:8765/callback/w0T0VlrC4q2n
+&code_verifier=dBjftJeZ4CVP-mB92K27uhbUJU1p1r…
+&client_id=<agent client_id>`,
+ note:'Open question for PM: is the SCM-issued client_secret meant to be enforced at the Gateway token endpoint?'}),
+S(6,'gw','agent','GW access token','back',{title:'Agent gets the Gateway\'s own token',src:['V','P'],give:[['agent','gw']],claims:'gw',
+ desc:'There are two tokens for two audiences. The Idira token stays at the Gateway, and the agent holds a Gateway-issued token that is valid only at the Gateway. In the PoC this token was <b>opaque</b>, not a JWT.'}),
+/* ---------- P7 tool call ---------- */
+S(7,'agent','gw','tools/call search_mail','data',{title:'Agent calls a tool through the Gateway',src:['G','X'],
+ http:`POST /mcp/<server-slug>
+Authorization: Bearer <GW token>
+
+{"jsonrpc":"2.0","id":7,"method":"tools/call",
+ "params":{"name":"search_mail","arguments":{"query":"Q3 forecast"}}}`}),
+S(7,'gw','gw','Validate · policy ALLOW · swap header','data',{title:'Gateway data plane: authorize, then broker credentials',src:['V','G','P'],
+ desc:'GA1 is <b>credential brokering</b>, not a token exchange. The MCP token comes from the separate Leg 2 sign-in and is not derived from the agent token.',
+ http:`① validate GW token (opaque pat_…)                   ✓
+② workspace: user ∩ agent ∩ server                    ✓ Finance-AI
+③ AIS policy: alice × AI Agent × search_mail          → ALLOW
+④ strip   Authorization: Bearer <GW token>
+⑤ vault[(alice, mcp-server)] → Authorization: Bearer <MCP token>
+   (refresh if expired — on refresh failure the call fails)`}),
+S(7,'gw','mcp','tools/call + Bearer MCP token','data',{title:'Request forwarded with the Entra-issued MCP token',src:['G','X'],
+ http:`POST https://mcp.contoso.com/mcp
+Authorization: Bearer eyJ0eXAi…   (Entra · aud=<mcp-server-app-id>)
+
+{"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"search_mail", …}}`}),
+S(7,'mcp','mcp','Validate Entra JWT','data',{title:'MCP Server validates the token',src:['E'],claims:'mcp',
+ desc:'It checks the signature (JWKS), <code>iss</code>, <code>aud</code> = MCP app and <code>scp ∋ mcp.tools</code>. The identity is <b>alice</b>; the calling client (<code>azp</code>) is the AI Gateway.'}),
+S(7,'mcp','entra','OBO: jwt-bearer grant','obo',{title:'Entra On-Behalf-Of: exchange for a Graph token',src:['E'],
+ desc:'The MCP Server presents alice\'s token and asks for one with audience Microsoft Graph. This is <b>SSO to the SaaS</b>: no user interaction, and the user identity carries through.',
+ http:`POST https://login.microsoftonline.com/<tid>/oauth2/v2.0/token
+grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer
+&client_id=<mcp-server-app-id>&client_secret=•••
+&assertion=<incoming MCP token>
+&scope=https://graph.microsoft.com/Mail.Read
+&requested_token_use=on_behalf_of`,
+ note:'Two different "OBO"s: Idira\'s on-behalf-of (Leg 1) is a delegation <i>relationship</i> with no token exchange in GA1. Entra OBO here is a real token exchange, done by the MCP Server outside AIRS.'}),
+S(7,'entra','mcp','Graph token (alice)','obo',{title:'Graph token issued for alice',src:['E'],give:[['mcp','graph']],claims:'graph'}),
+S(7,'mcp','graph','GET /me/messages','data',{title:'MCP Server calls Microsoft Graph as alice',src:['E','X'],
+ http:`GET https://graph.microsoft.com/v1.0/me/messages?$search="Q3 forecast"&$top=5
+Authorization: Bearer <Graph token>`}),
+S(7,'graph','mcp','200 · alice\'s mail only','data',{title:'Graph enforces alice\'s own permissions',src:['E','X'],
+ desc:'Effective access = delegated scopes (Mail.Read) ∩ alice\'s own rights. This is defense in depth: Gateway policy (agent × user × tool) ∩ backend permissions (user).',
+ http:`HTTP/1.1 200 OK
+{"value":[{"subject":"Q3 forecast – draft v3","from":{…},"receivedDateTime":"…"}, …]}`}),
+S(7,'mcp','gw','Tool result','data',{title:'Result returns through the Gateway',src:['G']}),
+S(7,'gw','agent','Tool result (logged)','data',{title:'Gateway logs and returns the result',src:['V'],
+ desc:'The Gateway records the user, agent, tool, decision, arguments and response. Workspace guardrails can inspect the payload.'}),
+
+/* ---------- P8 denied ---------- */
+S(8,'agent','gw','tools/call send_mail','data',{title:'Same agent tries a tool it is not granted',src:['G','X'],
+ http:`POST /mcp/<server-slug>
+Authorization: Bearer <GW token>
+
+{"jsonrpc":"2.0","id":8,"method":"tools/call",
+ "params":{"name":"send_mail","arguments":{"to":"external@partner.com","subject":"Q3 forecast"}}}`}),
+S(8,'gw','gw','Policy → DENY','deny',{title:'AIS policy denies: user × agent × tool',src:['G','P'],
+ desc:'alice could send mail herself, but the policy does not grant <code>send_mail</code> to <b>AI Agent</b>. Agent identity changes the outcome, which Entra and Graph alone could not do because their tokens do not identify the agent. The PoC verified the agent-level variant: same user and MCP server, but a new agent without a policy was denied.',
+ http:`① validate GW token                                  ✓
+② workspace                                           ✓
+③ AIS policy: alice × AI Agent × send_mail            → DENY
+   MCP token NOT retrieved · request NOT forwarded`}),
+S(8,'gw','agent','Access denied','deny',{title:'Access-denied response; the backend is never reached',src:['G','X'],blocked:true,
+ desc:'The MCP Server, Entra OBO and Microsoft Graph are never touched. The attempt is logged with decision = deny.',
+ http:`{"jsonrpc":"2.0","id":8,
+ "error":{"code":-32001,"message":"Access denied by policy"}}`}),
+
+/* ---------- P9 audit ---------- */
+S(9,'scm','scm','SCM → Agent Identity → Audit Logs','back',{title:'SCM audit log',src:['V'],
+ http:`Timestamp · Agent Name: AI Agent · Agent ID: 7f3c2a9e-… · User: alice@contoso.com
+Path: /<server-slug>/tools/search_mail   Decision: allow   reason: policy_matched
+Path: /<server-slug>/tools/send_mail     Decision: deny
+Scopes requested / granted: mcp:servers:read …`}),
+S(9,'gw','gw','Observability → Logs','back',{title:'AI Gateway observability',src:['V'],
+ http:`mcp.server.id · mcp.request.method · mcp.tool.name
+caller.client_id · caller.user_id · caller.agent.id · caller.agent.name · caller.agent.owner_id
+authz.decision · authz.scopes_granted / requested · trace.trace_id · caller.ip
++ full request arguments and response payload`}),
+S(9,'idira','idira','Agent sign-in events','back',{title:'Idira console',src:['V'],
+ desc:'Agent sign-in events show which user authorized which agent, and when.'}),
+S(9,'entra','entra','Sign-in logs','back',{title:'Entra ID sign-in logs',src:['E'],last:true,
+ desc:'<ul><li><b>Interactive</b>: alice → Idira (SAML), with MFA / CA result</li><li><b>Non-interactive</b>: alice → AI Gateway – MCP client (Leg 2, refresh)</li><li><b>Non-interactive</b>: alice → MCP Server API → Microsoft Graph (OBO)</li></ul>Correlate on the user (oid) and time with the SCM and Gateway logs.'}),
+];
+STEPS.forEach((s,i)=>{ s.i=i; });
+PHASES.forEach((ph,pi)=>{ ph.steps = STEPS.filter(s=>s.p===pi); ph.steps.forEach((s,k)=>s.n=`${pi}.${k+1}`); ph.start = ph.steps[0].i; });
+
+const TAKEAWAYS_EN = `
+<li><b>One interactive sign-in.</b> The user signs in to Entra (via Idira, SAML) once in Leg 1. Leg 2 and Graph access reuse it through Entra SSO and OBO.</li>
+<li><b>Four tokens, four audiences, none forwarded past its audience:</b> GW token (agent → GW) · Idira token (stays at GW) · MCP token (GW → MCP) · Graph token (MCP → Graph).</li>
+<li><b>Agent identity is enforced at the Gateway</b> through policy and audit. Downstream tokens carry the user (+ Gateway / MCP app), not the agent, because GA1 has no token swap.</li>
+<li><b>Deny happens before any backend credential is used.</b> The agent never holds Entra, MCP or Graph credentials.</li>
+<li><b>Verified in the PoC (Nov 6, Keycloak as the Leg 2 AS):</b> Leg 2 ordering, pre-registered client, PRM + RFC 8414 path-insertion discovery, <code>resource</code> + PKCE, per-(user, server) token reuse, agent-level deny. <b>For Entra:</b> override the AS endpoints and set the Application ID URI to the MCP URL.</li>`;
+
+const UI_EN = { sub:'Prisma AIRS Agent Identity Security + AI Gateway · GA1 capabilities · single Entra ID tenant as IdP for Idira (SAML), MCP Server and Graph (OAuth/OIDC) · GW / Leg 2 behaviour verified in PoC (Nov 6)',
+  simple:'Simple', detailed:'Detailed', play:'▶ Play', pause:'❚❚ Pause', replay:'⟲ Replay', phase:'Phase', step:'Step', internal:'internal',
+  wire:'Wire detail', config:'Configuration', claims:'Token claims', legendTail:'Token chips under each actor = what it holds right now',
+  kbd:'<kbd>←</kbd> <kbd>→</kbd> step · <kbd>Space</kbd> play/pause · <kbd>D</kbd> simple/detailed · click a phase to jump',
+  blocked:'never forwarded — no MCP token used, no OBO, no Graph call', takeTitle:'Key takeaways',
+  tRestart:'Restart (Home)', tPrev:'Previous (←)', tNext:'Next (→)', tPlay:'Play / pause (Space)', tSpeed:'Playback speed' };
+let lang = 'en';
+const D = () => I18N[lang] || {};
+const ui = k => (D().ui && D().ui[k]) ?? UI_EN[k];
+const stT = (s,f) => { const v = D().steps && D().steps[s.i] && D().steps[s.i][f]; return v ?? s[f]; };
+const phN = i => (D().phases && D().phases[i] && D().phases[i][0]) ?? PHASES[i].name;
+const phD = i => (D().phases && D().phases[i] && D().phases[i][1]) ?? PHASES[i].desc;
+const laneN = l => (D().lanes && D().lanes[l.id] && D().lanes[l.id][0]) ?? l.name;
+const laneS = l => (D().lanes && D().lanes[l.id] && D().lanes[l.id][1]) ?? l.sub;
+const tokL = t => (D().tokens && D().tokens[t]) ?? TOKENS[t].label;
+const kindN = k => (D().kinds && D().kinds[k]) ?? KINDS[k].name;
+const srcT = k => (D().src && D().src[k]) ?? SRC[k].t;
+const claimNote = k => (D().claims && D().claims[k]) ?? CLAIMS[k].note;
+const takeaways = () => `<div class="takeaways"><h3>${ui('takeTitle')}</h3><ul>${D().takeaways ?? TAKEAWAYS_EN}</ul></div>`;
+const textW = str => { let w = 0; for(const ch of str) w += /[ᄀ-ᇿ⺀-鿿가-힯＀-￯]/.test(ch) ? 11.6 : 6.4; return w; };
+
+/* ------------------------------------------------------------------ state */
+let cur = 0, playing = false, timer = null, simple = false;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function hiHttp(s){
+  return esc(s)
+    .replace(/^(HTTP\/1\.1 \d+[^\n]*|GET|POST|Set-Cookie:|Location:|Authorization:|WWW-Authenticate:)/gm,'<span class="h">$1</span>')
+    .replace(/(→ (ALLOW|DENY))/g, m => `<span class="h">${m}</span>`);
+}
+function hiJson(o){
+  return esc(JSON.stringify(o,null,2))
+    .replace(/&quot;([^&]+?)&quot;:/g,'<span class="k">"$1"</span>:')
+    .replace(/: &quot;(.*?)&quot;/g,': <span class="s">"$1"</span>');
+}
+
+function wallet(upto){
+  const w = Object.fromEntries(LANES.map(l=>[l.id,[]]));
+  for(let i=0;i<=upto;i++){
+    const s=STEPS[i];
+    (s.give||[]).forEach(([l,t])=>{ if(!w[l].includes(t)) w[l].push(t); });
+    (s.take||[]).forEach(([l,t])=>{ w[l]=w[l].filter(x=>x!==t); });
+  }
+  return w;
+}
+
+/* ------------------------------------------------------------------ render */
+function buildStatic(){
+  document.documentElement.lang = lang;
+  $('subtitle').textContent = ui('sub'); $('kbd').innerHTML = ui('kbd');
+  $('mSimple').textContent = ui('simple'); $('mDetail').textContent = ui('detailed');
+  $('bRestart').title = ui('tRestart'); $('bPrev').title = ui('tPrev'); $('bNext').title = ui('tNext'); $('bPlay').title = ui('tPlay'); $('speed').title = ui('tSpeed');
+  $('phases').innerHTML = PHASES.map((p,i)=>`<div class="ph${p.deny?' deny':''}" data-p="${i}"><b>${ui('phase')} ${p.k}</b>${phN(i)}</div>`).join('');
+  $('phases').querySelectorAll('.ph').forEach(el=>el.onclick=()=>{ stop(); go(PHASES[+el.dataset.p].start); });
+  $('legend').innerHTML = Object.entries(KINDS).map(([id,k])=>`<span><i style="border-top:2px ${k.dash?(k.dash.startsWith('2')?'dotted':'dashed'):'solid'} ${k.c}"></i>${kindN(id)}</span>`).join('')
+    + `<span style="margin-left:auto">${ui('legendTail')}</span>`;
+}
+
+let lastPrevPhase = -1;
+function render(animate=true){
+  const s = STEPS[cur], ph = PHASES[s.p];
+  // phases bar
+  $('phases').querySelectorAll('.ph').forEach((el,i)=>{ el.classList.toggle('cur',i===s.p); el.classList.toggle('done',i<s.p); });
+  $('progress').firstElementChild.style.width = ((cur+1)/STEPS.length*100)+'%';
+  // lanes + wallet
+  const w = wallet(cur), prevW = cur>0 ? wallet(cur-1) : {};
+  const active = new Set([s.from,s.to]);
+  $('lanes').innerHTML = LANES.map(l=>`<div class="lane${active.has(l.id)?' active':''}">
+     <div class="badge" style="background:${l.color};color:#0a0e16">${l.ab}</div>
+     <div class="nm">${laneN(l)}</div><div class="sb">${laneS(l)}</div>
+     <div class="wallet">${w[l.id].map(t=>{const T=TOKENS[t];const isNew=!(prevW[l.id]||[]).includes(t);
+        return `<span class="tok" style="color:${T.color};border-color:${T.color}55;background:${T.color}14${isNew?'':';animation:none'}" title="${tokL(t)}">${tokL(t)}</span>`}).join('')}</div></div>`).join('');
+  drawDiagram(ph, s, animate);
+  drawDetail(ph, s);
+  $('bPlay').textContent = playing ? ui('pause') : (cur===STEPS.length-1 ? ui('replay') : ui('play'));
+}
+
+function drawDiagram(ph, s, animate){
+  const box = $('diagram');
+  const W = box.clientWidth, colW = W/LANES.length, rowH = 46, top = 34;
+  const n = ph.steps.length, H = Math.max(box.clientHeight-4, top + n*rowH + 30);
+  const x = id => colW*(LI[id]+.5);
+  let svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg"><defs>`;
+  for(const [k,v] of Object.entries(KINDS))
+    svg += `<marker id="ah-${k}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${v.c}"/></marker>`;
+  svg += `<filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+  LANES.forEach(l=>{ svg += `<line x1="${x(l.id)}" y1="6" x2="${x(l.id)}" y2="${H-6}" stroke="${l.color}" stroke-opacity=".22" stroke-dasharray="3 5"/>`; });
+  svg += `<text x="12" y="20" fill="#5b6780" font-size="11" font-weight="700" letter-spacing="1">${esc(ui('phase').toUpperCase())} ${ph.k} · ${esc(phN(+ph.k).toUpperCase())}</text>`;
+
+  ph.steps.forEach((st,k)=>{
+    if(st.i > s.i) return;
+    const isNew = st.i===s.i, y = top + k*rowH + 26, K = KINDS[st.kind];
+    const lbl = `${st.n}  ${stT(st,'t')}`, tw = textW(lbl) + 16;
+    let g = `<g class="${isNew&&animate?'msg-new':(isNew?'':'msg-old')}">`;
+    if(st.from===st.to){
+      const cx = x(st.from), bw = Math.max(tw, 120);
+      g += `<g class="self" style="transform-origin:${cx}px ${y}px"><rect x="${cx-bw/2}" y="${y-13}" width="${bw}" height="26" rx="7" fill="${K.c}22" stroke="${K.c}" stroke-width="${isNew?1.8:1}" ${isNew?'filter="url(#glow)"':''}/>
+            <text x="${cx}" y="${y+4}" text-anchor="middle" fill="${isNew?'#fff':'#cfd6e4'}" font-size="11.5" font-weight="${isNew?650:500}">${esc(lbl)}</text></g>`;
+    } else {
+      const x1 = x(st.from), x2 = x(st.to), dir = Math.sign(x2-x1);
+      const sx = x1 + dir*4, ex = x2 - dir*6, len = Math.abs(ex-sx), mx = (x1+x2)/2;
+      g += `<line class="ln" x1="${sx}" y1="${y}" x2="${ex}" y2="${y}" stroke="${K.c}" stroke-width="${isNew?2.4:1.6}" ${K.dash?`stroke-dasharray="${K.dash}"`:`stroke-dasharray="${len}"`} style="--len:${len}" marker-end="url(#ah-${st.kind})"/>`;
+      g += `<circle cx="${x1}" cy="${y}" r="3.5" fill="${K.c}"/>`;
+      if(isNew && animate) g += `<circle r="6" cy="${y}" fill="#fff" filter="url(#glow)"><animate attributeName="cx" from="${sx}" to="${ex}" dur=".75s" fill="freeze"/><animate attributeName="opacity" values="1;1;0" keyTimes="0;.85;1" dur=".9s" fill="freeze"/></circle>`;
+      g += `<g class="lbl"><rect x="${mx-tw/2}" y="${y-22}" width="${tw}" height="17" rx="4" fill="#0a0e16" fill-opacity=".92" stroke="${isNew?K.c:'none'}" stroke-opacity=".6"/>
+            <text x="${mx}" y="${y-9.5}" text-anchor="middle" fill="${isNew?'#fff':'#b8c2d6'}" font-size="11.5" font-weight="${isNew?650:500}">${esc(lbl)}</text></g>`;
+      if(st.blocked){
+        const bx1 = x('gw')+8, bx2 = x('graph')-8, by = y+14;
+        g += `<g class="lbl"><line x1="${bx1}" y1="${by}" x2="${bx2}" y2="${by}" stroke="#ef4444" stroke-opacity=".55" stroke-width="1.5" stroke-dasharray="4 5"/>
+          ${['mcp','entra','graph'].map(id=>`<text x="${x(id)}" y="${by+5}" text-anchor="middle" fill="#ef4444" font-size="16" font-weight="800">✕</text>`).join('')}
+          <text x="${(x('entra')+x('mcp'))/2}" y="${by+20}" text-anchor="middle" fill="#fca5a5" font-size="11">${esc(ui('blocked'))}</text></g>`;
+      }
+    }
+    svg += g + '</g>';
+  });
+  svg += '</svg>';
+  box.innerHTML = svg;
+  const k = ph.steps.findIndex(st=>st.i===s.i), yy = top + k*rowH;
+  if(yy > box.scrollTop + box.clientHeight - 90 || yy < box.scrollTop) box.scrollTo({top: Math.max(0, yy - box.clientHeight/2), behavior:'smooth'});
+}
+
+function drawDetail(ph, s){
+  const tags = (s.src||[]).map(k=>`<span class="tag" style="color:${SRC[k].c};border-color:${SRC[k].c}66;background:${SRC[k].c}12">${srcT(k)}</span>`).join('');
+  const K = KINDS[s.kind];
+  const route = s.from===s.to ? laneN(LANES[LI[s.from]]) : `${laneN(LANES[LI[s.from]])} → ${laneN(LANES[LI[s.to]])}`;
+  let h = `<div class="phase-title">${ui('phase')} ${ph.k} · ${phN(s.p)}</div><div class="phase-desc">${phD(s.p)}</div>
+    <div class="stepno">${ui('step')} ${s.n} · ${route}${s.from===s.to?` · ${ui('internal')}`:` · <span style="color:${K.c}">${kindN(s.kind)}</span>`}</div>
+    <h2>${stT(s,'title')||stT(s,'t')}</h2><div class="tags">${tags}</div>`;
+  if(stT(s,'desc')) h += `<div class="desc">${stT(s,'desc')}</div>`;
+  if(s.http) h += `<div class="tech"><div class="sec">${s.kind==='config'?ui('config'):ui('wire')}</div><pre>${hiHttp(s.http)}</pre></div>`;
+  if(s.claims){ const C = CLAIMS[s.claims], T = TOKENS[C.tok];
+    h += `<div class="tech"><div class="sec">${ui('claims')}</div><div class="claims-cap"><span class="dot" style="background:${T.color}"></span>${tokL(C.tok)}</div><pre>${hiJson(C.obj)}</pre><div class="desc" style="font-size:12px;color:var(--muted);margin-top:5px">${claimNote(s.claims)}</div></div>`; }
+  if(stT(s,'note')) h += `<div class="note tech">${stT(s,'note')}</div>`;
+  if(s.last) h += takeaways();
+  $('detail').innerHTML = h; $('detail').scrollTop = 0;
+}
+
+/* ------------------------------------------------------------------ control */
+function go(i, animate=true){ cur = Math.max(0, Math.min(STEPS.length-1, i)); render(animate); }
+function delay(){ const s = STEPS[cur]; const base = 2600 + (s.http&&!simple?900:0) + (s.claims&&!simple?900:0) + (s.desc?400:0); return base * +$('speed').value; }
+function tick(){ if(!playing) return; if(cur>=STEPS.length-1){ stop(); return; } go(cur+1); timer = setTimeout(tick, delay()); }
+function play(){ if(cur>=STEPS.length-1) go(0); playing = true; render(false); clearTimeout(timer); timer = setTimeout(tick, delay()); }
+function stop(){ playing = false; clearTimeout(timer); $('bPlay').textContent = cur===STEPS.length-1 ? ui('replay') : ui('play'); }
+function setMode(sim){ simple = sim; document.body.classList.toggle('simple', sim); $('mSimple').classList.toggle('on',sim); $('mDetail').classList.toggle('on',!sim); }
+
+$('bPlay').onclick = () => playing ? stop() : play();
+$('bNext').onclick = () => { stop(); go(cur+1); };
+$('bPrev').onclick = () => { stop(); go(cur-1); };
+$('bRestart').onclick = () => { stop(); go(0); };
+$('mSimple').onclick = () => setMode(true);
+$('mDetail').onclick = () => setMode(false);
+document.addEventListener('keydown', e=>{
+  if(e.target.tagName==='SELECT') return;
+  if(e.key==='ArrowRight'){ stop(); go(cur+1); }
+  else if(e.key==='ArrowLeft'){ stop(); go(cur-1); }
+  else if(e.key===' '){ e.preventDefault(); playing?stop():play(); }
+  else if(e.key==='Home'){ stop(); go(0); }
+  else if(e.key==='End'){ stop(); go(STEPS.length-1); }
+  else if(e.key.toLowerCase()==='d'){ setMode(!simple); }
+});
+let rz; window.addEventListener('resize', ()=>{ clearTimeout(rz); rz = setTimeout(()=>render(false), 120); });
+
+function setLang(l){ lang = I18N[l] ? l : 'en'; $('lang').value = lang; buildStatic(); render(false); }
+$('lang').onchange = e => setLang(e.target.value);
+const hashLang = (location.hash.match(/lang=([\w-]+)/)||[])[1];
+if(hashLang && I18N[hashLang]){ lang = hashLang; $('lang').value = lang; }
+buildStatic();
+const hashStep = parseInt((location.hash.match(/step=(\d+)/)||[])[1]);
+go(isNaN(hashStep)?0:hashStep);
+</script>
+</body>
+</html>
