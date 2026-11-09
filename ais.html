@@ -490,6 +490,43 @@ for (const [lg, P] of Object.entries(I18N_PATCH)) {
   L.takeaways = L.takeaways.replace(/<li><b>[^<]*PoC[^<]*<\/b>[\s\S]*?<\/li>\s*$/, '') .replace(/\s*$/, '') + '\n' + P.take;
   for (const [i, o] of Object.entries(P.steps)) Object.assign(L.steps[+i], o);
 }
+
+/* ---- 2026-11-09: two new Leg 2 steps inserted at index 29 (GW reads PRM, GW resolves endpoints) ---- */
+const I18N_INSERT_29 = {
+ 'zh-CN': [
+  {t:'GET PRM（仅元数据）', title:'Gateway 读取 MCP Server 的受保护资源元数据',
+   desc:'用户已同意，而 Gateway 手里<b>没有（alice, mcp-server）的 token</b>，于是开始 Leg 2。如果已经有 token（比如同一用户换了一个 agent），就跳过 Leg 2，这一点 PoC 已验证。它先问 MCP Server 去哪里拿 token。MCP Server 只返回元数据，<b>从不重定向浏览器</b>。'},
+  {t:'解析 Entra 端点', title:'Gateway 确定授权端点和 token 端点',
+   desc:'对接 Keycloak 时，GW 从 RFC 8414 <b>路径插入</b>地址读取了元数据（已验证）。Entra 不提供这个地址，所以这里的端点来自 <b>OAuth Metadata</b>（步骤 0.5）。'}],
+ 'zh-TW': [
+  {t:'GET PRM（僅中繼資料）', title:'Gateway 讀取 MCP Server 的受保護資源中繼資料',
+   desc:'使用者已同意，而 Gateway 手上<b>沒有（alice, mcp-server）的 token</b>，於是開始 Leg 2。如果已經有 token（例如同一使用者換了一個 agent），就跳過 Leg 2，這一點 PoC 已驗證。它先詢問 MCP Server 要去哪裡取得 token。MCP Server 只傳回中繼資料，<b>從不重新導向瀏覽器</b>。'},
+  {t:'解析 Entra 端點', title:'Gateway 確定授權端點與 token 端點',
+   desc:'對接 Keycloak 時，GW 從 RFC 8414 <b>路徑插入</b>位址讀取了中繼資料（已驗證）。Entra 不提供這個位址，所以這裡的端點來自 <b>OAuth Metadata</b>（步驟 0.5）。'}],
+ 'ko': [
+  {t:'GET PRM (메타데이터만)', title:'Gateway가 MCP Server의 보호 리소스 메타데이터를 읽음',
+   desc:'사용자가 동의했고 Gateway에 <b>(alice, mcp-server) 토큰이 없으므로</b> Leg 2를 시작합니다. 이미 토큰이 있으면(예: 같은 사용자가 다른 에이전트 사용) Leg 2를 건너뜁니다(PoC 검증). 먼저 MCP Server에 토큰을 어디서 받는지 묻습니다. MCP Server는 메타데이터만 반환하며 <b>브라우저를 리디렉션하지 않습니다</b>.'},
+  {t:'Entra 엔드포인트 확인', title:'Gateway가 authorize / token 엔드포인트를 확인',
+   desc:'Keycloak의 경우 GW는 RFC 8414 <b>경로 삽입</b> URL에서 메타데이터를 가져왔습니다(검증). Entra는 이 URL을 제공하지 않으므로 여기서는 엔드포인트를 <b>OAuth Metadata</b>(0.5단계)에서 가져옵니다.'}],
+};
+const I18N_PATCH2 = {
+ 'zh-CN': { phase5:'在同一次登录流程中进行：用户同意之后、agent 拿到授权码之前。Gateway 读取 MCP Server 的 PRM，确定 Entra 的端点，然后作为 Entra 的 OAuth 客户端，自己把浏览器重定向过去。MCP Server 从不重定向。Leg 1 留下的 Entra 会话让这一步静默完成（SSO）。',
+   31:{t:'302 → Entra /authorize（由 GW 生成）', title:'Gateway 生成跳转到 Entra 的 302，而不是 MCP Server',
+       desc:'这个重定向由 Gateway 自己生成，它是 Entra 面向 MCP Server 的 OAuth 客户端：<ul><li><code>client_id</code>：来自 OAuth Metadata（配置项）</li><li><code>redirect_uri</code>：GW 固定的 <code>/oauth/upstream-callback</code></li><li><code>scope</code> 和 <code>resource</code>：取自 MCP 的 PRM</li><li>PKCE 的 <code>code_challenge</code> 和 <code>state</code>：为本次授权生成</li></ul>已在 PoC 中用 Keycloak 验证。'}},
+ 'zh-TW': { phase5:'在同一次登入流程中進行：使用者同意之後、agent 取得授權碼之前。Gateway 讀取 MCP Server 的 PRM，確定 Entra 的端點，然後作為 Entra 的 OAuth 用戶端，自己把瀏覽器重新導向過去。MCP Server 從不重新導向。Leg 1 留下的 Entra 工作階段讓這一步靜默完成（SSO）。',
+   31:{t:'302 → Entra /authorize（由 GW 產生）', title:'Gateway 產生跳轉到 Entra 的 302，而不是 MCP Server',
+       desc:'這個重新導向由 Gateway 自己產生，它是 Entra 面向 MCP Server 的 OAuth 用戶端：<ul><li><code>client_id</code>：來自 OAuth Metadata（設定項）</li><li><code>redirect_uri</code>：GW 固定的 <code>/oauth/upstream-callback</code></li><li><code>scope</code> 與 <code>resource</code>：取自 MCP 的 PRM</li><li>PKCE 的 <code>code_challenge</code> 與 <code>state</code>：為本次授權產生</li></ul>已在 PoC 中以 Keycloak 驗證。'}},
+ 'ko': { phase5:'같은 로그인 흐름 안에서, 동의 이후 에이전트가 코드를 받기 전에 실행됩니다. Gateway는 MCP Server의 PRM을 읽고 Entra 엔드포인트를 확인한 뒤, Entra의 OAuth 클라이언트로서 직접 브라우저를 리디렉션합니다. MCP Server는 리디렉션하지 않습니다. Leg 1의 Entra 세션 덕분에 조용히 처리됩니다(SSO).',
+   31:{t:'302 → Entra /authorize (GW가 생성)', title:'Entra로 가는 302는 MCP Server가 아니라 Gateway가 생성',
+       desc:'이 리디렉션은 MCP Server를 위한 Entra의 OAuth 클라이언트인 Gateway가 직접 만듭니다:<ul><li><code>client_id</code>: OAuth Metadata(구성값)</li><li><code>redirect_uri</code>: GW의 고정 <code>/oauth/upstream-callback</code></li><li><code>scope</code>, <code>resource</code>: MCP PRM에서 가져옴</li><li>PKCE <code>code_challenge</code>, <code>state</code>: 이번 권한 부여용으로 생성</li></ul>PoC에서 Keycloak으로 검증했습니다.'}},
+};
+for (const [lg, ins] of Object.entries(I18N_INSERT_29)) {
+  const L = I18N[lg]; if (!L) continue;
+  L.steps.splice(29, 0, ...ins);
+  const P = I18N_PATCH2[lg];
+  L.phases[5][1] = P.phase5;
+  for (const [i, o] of Object.entries(P)) if (i !== 'phase5') Object.assign(L.steps[+i], o);
+}
 </script>
 <script>
 /* ------------------------------------------------------------------ data */
@@ -560,7 +597,7 @@ const PHASES = [
  {k:'2', name:'Discovery', desc:'MCP authorization discovery: the agent learns that the AI Gateway is its authorization server. It never talks to Idira or Entra directly.'},
  {k:'3', name:'Leg 1 · Idira OBO sign-in', desc:'OAuth 2.1 authorization code + PKCE. The Gateway brokers the agent\'s request to Idira; Idira authenticates the user against Entra ID via SAML. Result: an Idira token that binds user + agent (on-behalf-of).'},
  {k:'4', name:'Gateway authorization', desc:'The Gateway works out what this user + agent pair may reach, and the user consents.'},
- {k:'5', name:'Leg 2 · MCP sign-in', desc:'Runs inside the same sign-in, after consent and before the agent gets its code. The Gateway is Entra\'s OAuth client for the MCP Server. The Entra session from Leg 1 makes it silent (SSO).'},
+ {k:'5', name:'Leg 2 · MCP sign-in', desc:'Runs inside the same sign-in, after consent and before the agent gets its code. The Gateway reads the MCP Server\'s PRM, resolves Entra\'s endpoints and redirects the browser itself, acting as Entra\'s OAuth client. The MCP Server never redirects. The Entra session from Leg 1 makes this silent (SSO).'},
  {k:'6', name:'Agent token', desc:'The agent completes its own OAuth flow and receives a token issued by the Gateway — not by Idira, not by Entra.'},
  {k:'7', name:'Tool call → Graph', desc:'Every tool call passes the Gateway: policy check, then header replacement (GA1 credential brokering). The MCP Server uses Entra OBO to call Microsoft Graph as the user — no further sign-in.'},
  {k:'8', name:'Denied call', deny:true, desc:'Same agent, same user, a tool the policy does not allow. The Gateway blocks it and the backend is never reached.'},
@@ -736,8 +773,19 @@ S(4,'gw','user','Consent page','front',{title:'Consent page',src:['V'],
 S(4,'user','gw','Approve','front',{title:'User approves',src:['V']}),
 
 /* ---------- P5 Leg 2 ---------- */
-S(5,'gw','user','302 → Entra /authorize (MCP scope)','front',{title:'Gateway starts Leg 2 as Entra\'s OAuth client',src:['P','I','X'],
- desc:'Leg 2 happens inside the same browser flow, after consent and before the agent gets its code. Verified in the PoC (Keycloak as the AS): the GW reads the MCP PRM, uses PKCE, takes the scope from <code>scopes_supported</code>, adds <code>resource=&lt;MCP URL&gt;</code>, and redirects back to its fixed <code>/oauth/upstream-callback</code>.',
+S(5,'gw','mcp','GET PRM (metadata only)','back',{title:'Gateway reads the MCP Server\'s protected-resource metadata',src:['P'],
+ desc:'Consent is approved and the Gateway holds <b>no token for (alice, mcp-server)</b>, so it starts Leg 2. If it already holds one (for example the same user on another agent), Leg 2 is skipped, as verified in the PoC. First it asks the MCP Server where tokens come from. The MCP Server only answers with metadata; it <b>never redirects the browser</b>.',
+ http:`GET https://mcp.contoso.com/.well-known/oauth-protected-resource/mcp
+→ { "resource": "https://mcp.contoso.com/mcp",
+    "authorization_servers": ["https://login.microsoftonline.com/<tid>/v2.0"],
+    "scopes_supported": ["https://mcp.contoso.com/mcp.tools"] }`}),
+S(5,'gw','gw','Resolve Entra endpoints','back',{title:'Gateway resolves the authorize and token endpoints',src:['P','I'],
+ desc:'With Keycloak, the GW fetched RFC 8414 metadata from the <b>path-insertion</b> URL (verified). Entra does not serve that URL, so here the endpoints come from <b>OAuth Metadata</b> (step 0.5).',
+ http:`PoC (Keycloak): GET https://kc…/.well-known/oauth-authorization-server/realms/aisdemo → 200
+Entra:          …/.well-known/oauth-authorization-server/<tid>/v2.0 → not served
+                → authorization_endpoint / token_endpoint from OAuth Metadata`}),
+S(5,'gw','user','302 → Entra /authorize (built by GW)','front',{title:'Gateway builds the 302 to Entra — not the MCP Server',src:['P','I','X'],
+ desc:'The Gateway generates the redirect itself, as Entra\'s OAuth client for the MCP Server:<ul><li><code>client_id</code>: OAuth Metadata (configured)</li><li><code>redirect_uri</code>: the GW\'s fixed <code>/oauth/upstream-callback</code></li><li><code>scope</code> and <code>resource</code>: taken from the MCP PRM</li><li>PKCE <code>code_challenge</code> and <code>state</code>: generated for this authorization</li></ul>Verified in the PoC with Keycloak.',
  http:`HTTP/1.1 302 Found
 Location: https://login.microsoftonline.com/<tid>/oauth2/v2.0/authorize
   ?client_id=<ai-gateway-app-id>&response_type=code
@@ -745,7 +793,7 @@ Location: https://login.microsoftonline.com/<tid>/oauth2/v2.0/authorize
   &scope=https://mcp.contoso.com/mcp.tools
   &resource=https://mcp.contoso.com/mcp
   &code_challenge=…&code_challenge_method=S256&state=…`,
- note:'Entra specifics are still <b>inferred</b>. Entra has no RFC 8414 path-insertion metadata, so the endpoints are set in OAuth Metadata (step 0.5). Making the Application ID URI equal to the MCP URL keeps <code>resource</code> and <code>scope</code> consistent. Add <code>offline_access</code> to the scope if the GW should refresh.'}),
+ note:'Entra specifics are still <b>inferred</b>. Making the Application ID URI equal to the MCP URL keeps <code>resource</code> and <code>scope</code> consistent. Add <code>offline_access</code> to the scope if the GW should refresh.'}),
 S(5,'user','entra','Existing session → SSO','front',{title:'Silent SSO — no password, no MFA',src:['E'],
  desc:'The Entra session cookie from Leg 1 is reused, so there is no second login. A consent prompt appears only if admin consent for <code>mcp.tools</code> was not granted.'}),
 S(5,'entra','user','302 code → GW upstream-callback','front',{title:'Entra returns a code for the Gateway',src:['E','P']}),
